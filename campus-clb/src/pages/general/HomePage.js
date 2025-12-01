@@ -11,8 +11,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import styled from 'styled-components';
-import Students from '../assets/students.svg';
-import { LightPurpleButton } from '../components/buttonStyles';
+import HomeBg from '../../assets/home-page.jpg';
 
 const Homepage = () => {
   const theme = useTheme();
@@ -28,7 +27,6 @@ const Homepage = () => {
           <Grid item xs={12} md={6}>
             <IllustrationBox>
               <IllustrationCircle />
-              <IllustrationImage src={Students} alt="Sinh viên & câu lạc bộ" />
             </IllustrationBox>
           </Grid>
 
@@ -51,10 +49,19 @@ const Homepage = () => {
               </Subtitle>
 
               <ActionsBox>
-                <StyledLink to="/choose">
-                  <LightPurpleButton variant="contained" fullWidth size="large">
+                <StyledLink to="/login">
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    sx={{
+                      backgroundColor: '#7f56da',
+                      fontWeight: 600,
+                      boxShadow: '0 12px 30px rgba(88, 28, 135, 0.35)',
+                    }}
+                  >
                     Đăng nhập để bắt đầu
-                  </LightPurpleButton>
+                  </Button>
                 </StyledLink>
 
                 <StyledLink to="/chooseasguest">
@@ -67,10 +74,6 @@ const Homepage = () => {
                       color: '#7f56da',
                       borderColor: '#c4a8ff',
                       fontWeight: 500,
-                      '&:hover': {
-                        borderColor: '#7f56da',
-                        backgroundColor: 'rgba(127, 86, 218, 0.04)',
-                      },
                     }}
                   >
                     Xem nhanh với tư cách khách
@@ -78,15 +81,15 @@ const Homepage = () => {
                 </StyledLink>
 
                 <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
-                  Chưa có tài khoản quản trị?{' '}
+                  Chưa có tài khoản?{' '}
                   <Link to="/Adminregister" style={{ color: '#5b21b6', fontWeight: 600 }}>
-                    Đăng ký quản lý CLB
+                    Đăng ký ngay
                   </Link>
                 </Typography>
               </ActionsBox>
 
               <FooterText variant="caption">
-                Theo dõi điểm rèn luyện, tỷ lệ tham gia hoạt động và xây dựng cộng đồng CLB năng động
+                Theo dõi các hoạt động CLB, tỷ lệ tham gia hoạt động và xây dựng cộng đồng CLB năng động
                 trong khuôn viên trường.
               </FooterText>
             </StyledPaper>
@@ -106,7 +109,12 @@ const PageWrapper = styled(Box)`
   min-height: 100vh;
   display: flex;
   align-items: center;
-  background: radial-gradient(circle at top left, #f3e8ff 0%, #e0f2ff 35%, #fdf2ff 100%);
+  background-image:
+    linear-gradient(to bottom right, rgba(79, 70, 229, 0.6), rgba(236, 72, 153, 0.35)),
+    url(${HomeBg});
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 `;
 
