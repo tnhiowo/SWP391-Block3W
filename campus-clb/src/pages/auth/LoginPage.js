@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Grid, Box, Typography, Paper, Checkbox, FormControlLabel, TextField, CssBaseline, IconButton, InputAdornment } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Button, Checkbox, Form, Input, Typography, Card, Row, Col } from 'antd';
+import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-
-const defaultTheme = createTheme();
 
 const LoginPage = ({ role }) => {
 
@@ -64,250 +61,245 @@ const LoginPage = ({ role }) => {
     }
 
     return (
-        <ThemeProvider theme={defaultTheme}>
-            <Grid
-                container
-                component="main"
-                sx={{
-                    minHeight: '100vh',
-                    background: 'linear-gradient(135deg, #f3e8ff 0%, #e0f2ff 50%, #fdf2ff 100%)',
+        <div
+            style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #f3e8ff 0%, #e0f2ff 50%, #fdf2ff 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px 16px',
+            }}
+        >
+            <div
+                style={{
+                    width: '100%',
+                    maxWidth: 1120,
                 }}
             >
-                <CssBaseline />
-
-                <Box
-                    sx={{
-                        flexGrow: 1,
-                        width: '100%',
-                        maxWidth: 1120,
-                        mx: 'auto',
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        px: { xs: 2, sm: 4 },
-                        py: { xs: 6, md: 0 },
-                        gap: { xs: 4, md: 0 },
-                    }}
-                >
-                    <Grid
-                        item
-                        xs={12}
-                        md={5}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <Paper
-                            elevation={8}
-                            sx={{
+                <Row gutter={[32, 32]} align="middle" justify="space-between">
+                    <Col xs={24} md={10}>
+                        <Card
+                            style={{
                                 width: '100%',
                                 maxWidth: 420,
-                                borderRadius: 4,
-                                p: { xs: 3, sm: 4 },
+                                borderRadius: 16,
                                 boxShadow: '0 24px 60px rgba(15, 23, 42, 0.22)',
                                 backgroundColor: '#ffffffdd',
                                 backdropFilter: 'blur(14px)',
                             }}
+                            bodyStyle={{ padding: 24 }}
                         >
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                <Box>
-                                    <Typography
-                                        variant="overline"
-                                        sx={{ letterSpacing: 1.8, color: '#7f56da', fontWeight: 700 }}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                <div>
+                                    <Typography.Text
+                                        style={{
+                                            letterSpacing: 1.8,
+                                            color: '#7f56da',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            fontSize: 12,
+                                        }}
                                     >
-                                        CÂU LẠC BỘ 
-                                    </Typography>
-                                    <Typography
-                                        variant="h4"
-                                        sx={{ mt: 1, mb: 1, color: '#1f2933', fontWeight: 700 }}
+                                        CÂU LẠC BỘ
+                                    </Typography.Text>
+                                    <Typography.Title
+                                        level={3}
+                                        style={{ marginTop: 8, marginBottom: 8, color: '#1f2933', fontWeight: 700 }}
                                     >
                                         Đăng nhập {role === 'Student' ? 'Sinh viên' : role === 'Admin' ? 'Quản trị CLB' : ''}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                    </Typography.Title>
+                                    <Typography.Text type="secondary">
                                         Đăng nhập để theo dõi hoạt động, tham gia sự kiện và quản lý câu lạc bộ trong campus.
-                                    </Typography>
-                                </Box>
+                                    </Typography.Text>
+                                </div>
 
-                                <Box
-                                    component="form"
-                                    noValidate
-                                    onSubmit={handleSubmit}
-                                    sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}
-                                >
-                                {role === "Student" ? (
-                                    <>
-                                        <TextField
-                                            margin="normal"
-                                            required
-                                            fullWidth
-                                            id="rollNumber"
-                                            label="Mã số sinh viên"
-                                            name="rollNumber"
-                                            autoComplete="off"
-                                            type="number"
-                                            autoFocus
-                                            error={rollNumberError}
-                                            helperText={rollNumberError && 'Vui lòng nhập mã số sinh viên'}
+                                <form noValidate onSubmit={handleSubmit} style={{ marginTop: 8 }}>
+                                    {role === 'Student' ? (
+                                        <>
+                                            <div style={{ marginBottom: 12 }}>
+                                                <label
+                                                    htmlFor="rollNumber"
+                                                    style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}
+                                                >
+                                                    Mã số sinh viên
+                                                </label>
+                                                <Input
+                                                    id="rollNumber"
+                                                    name="rollNumber"
+                                                    type="number"
+                                                    autoComplete="off"
+                                                    autoFocus
+                                                    status={rollNumberError ? 'error' : ''}
+                                                    onChange={handleInputChange}
+                                                />
+                                                {rollNumberError && (
+                                                    <div style={{ color: '#ff4d4f', marginTop: 4, fontSize: 12 }}>
+                                                        Vui lòng nhập mã số sinh viên
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div style={{ marginBottom: 12 }}>
+                                                <label
+                                                    htmlFor="studentName"
+                                                    style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}
+                                                >
+                                                    Họ và tên
+                                                </label>
+                                                <Input
+                                                    id="studentName"
+                                                    name="studentName"
+                                                    autoComplete="name"
+                                                    status={studentNameError ? 'error' : ''}
+                                                    onChange={handleInputChange}
+                                                />
+                                                {studentNameError && (
+                                                    <div style={{ color: '#ff4d4f', marginTop: 4, fontSize: 12 }}>
+                                                        Vui lòng nhập họ và tên
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label
+                                                htmlFor="email"
+                                                style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}
+                                            >
+                                                Email
+                                            </label>
+                                            <Input
+                                                id="email"
+                                                name="email"
+                                                type="email"
+                                                autoComplete="email"
+                                                autoFocus
+                                                status={emailError ? 'error' : ''}
+                                                onChange={handleInputChange}
+                                            />
+                                            {emailError && (
+                                                <div style={{ color: '#ff4d4f', marginTop: 4, fontSize: 12 }}>
+                                                    Vui lòng nhập email
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div style={{ marginBottom: 8 }}>
+                                        <label
+                                            htmlFor="password"
+                                            style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}
+                                        >
+                                            Mật khẩu
+                                        </label>
+                                        <Input.Password
+                                            id="password"
+                                            name="password"
+                                            autoComplete="current-password"
+                                            status={passwordError ? 'error' : ''}
+                                            iconRender={(visible) =>
+                                                visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                                            }
                                             onChange={handleInputChange}
                                         />
-                                        <TextField
-                                            margin="normal"
-                                            required
-                                            fullWidth
-                                            id="studentName"
-                                            label="Họ và tên"
-                                            name="studentName"
-                                            autoComplete="name"
-                                            error={studentNameError}
-                                            helperText={studentNameError && 'Vui lòng nhập họ và tên'}
-                                            onChange={handleInputChange}
-                                        />
-                                    </>
-                                ) : (
-                                    <TextField
-                                        margin="normal"
-                                        required
-                                        fullWidth
-                                        id="email"
-                                        label="Email"
-                                        name="email"
-                                        autoComplete="email"
-                                        autoFocus
-                                        error={emailError}
-                                        helperText={emailError && 'Vui lòng nhập email'}
-                                        onChange={handleInputChange}
-                                    />
-                                )}
+                                        {passwordError && (
+                                            <div style={{ color: '#ff4d4f', marginTop: 4, fontSize: 12 }}>
+                                                Vui lòng nhập mật khẩu
+                                            </div>
+                                        )}
+                                    </div>
 
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    name="password"
-                                    label="Mật khẩu"
-                                    type={toggle ? 'text' : 'password'}
-                                    id="password"
-                                    autoComplete="current-password"
-                                    error={passwordError}
-                                    helperText={passwordError && 'Vui lòng nhập mật khẩu'}
-                                    onChange={handleInputChange}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton onClick={() => setToggle(!toggle)} edge="end">
-                                                    {toggle ? <Visibility /> : <VisibilityOff />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-
-                                <Grid
-                                    container
-                                    sx={{
-                                        mt: 1,
-                                        mb: 0.5,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                    }}
-                                >
-                                    <FormControlLabel
-                                        control={<Checkbox value="remember" color="primary" size="small" />}
-                                        label={
-                                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                                Ghi nhớ đăng nhập
-                                            </Typography>
-                                        }
-                                    />
-                                    <StyledLink to="#">
-                                        Quên mật khẩu?
-                                    </StyledLink>
-                                </Grid>
-
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    sx={{
-                                        mt: 1.5,
-                                        py: 1.3,
-                                        fontWeight: 600,
-                                        fontSize: 15,
-                                        backgroundColor: '#7f56da',
-                                        '&:hover': {
-                                            backgroundColor: '#6b46c1',
-                                        },
-                                    }}
-                                >
-                                    Đăng nhập
-                                </Button>
-
-                                <Button
-                                    fullWidth
-                                    onClick={guestModeHandler}
-                                    variant="outlined"
-                                    sx={{
-                                        mt: 1.5,
-                                        mb: 0.5,
-                                        py: 1.3,
-                                        color: '#7f56da',
-                                        borderColor: '#d0b4ff',
-                                        fontWeight: 500,
-                                        '&:hover': {
-                                            borderColor: '#7f56da',
-                                            backgroundColor: 'rgba(127, 86, 218, 0.04)',
-                                        },
-                                    }}
-                                >
-                                    Truy cập nhanh (khách)
-                                </Button>
-
-                                {role === "Admin" && (
-                                    <Grid
-                                        container
-                                        justifyContent="center"
-                                        alignItems="center"
-                                        sx={{ mt: 1.5 }}
+                                    <div
+                                        style={{
+                                            marginTop: 8,
+                                            marginBottom: 8,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                        }}
                                     >
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                            Chưa có tài khoản quản trị?
-                                        </Typography>
-                                        <Box sx={{ ml: 1 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            <Checkbox value="remember" size="small" />
+                                            <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.65)' }}>
+                                                Ghi nhớ đăng nhập
+                                            </span>
+                                        </label>
+                                        <StyledLink to="#">Quên mật khẩu?</StyledLink>
+                                    </div>
+
+                                    <Button
+                                        htmlType="submit"
+                                        type="primary"
+                                        block
+                                        style={{
+                                            marginTop: 12,
+                                            padding: '10px 0',
+                                            fontWeight: 600,
+                                            fontSize: 15,
+                                            backgroundColor: '#7f56da',
+                                        }}
+                                    >
+                                        Đăng nhập
+                                    </Button>
+
+                                    <Button
+                                        block
+                                        onClick={guestModeHandler}
+                                        style={{
+                                            marginTop: 12,
+                                            marginBottom: 8,
+                                            padding: '10px 0',
+                                            color: '#7f56da',
+                                            borderColor: '#d0b4ff',
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        Truy cập nhanh (khách)
+                                    </Button>
+
+                                    {role === 'Admin' && (
+                                        <div
+                                            style={{
+                                                marginTop: 12,
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                gap: 8,
+                                            }}
+                                        >
+                                            <Typography.Text type="secondary">
+                                                Chưa có tài khoản quản trị?
+                                            </Typography.Text>
                                             <StyledLink to="/Adminregister">
                                                 Đăng ký quản lý CLB
                                             </StyledLink>
-                                        </Box>
-                                    </Grid>
-                                )}
-                            </Box>
-                        </Box>
-                        </Paper>
-                    </Grid>
+                                        </div>
+                                    )}
+                                </form>
+                            </div>
+                        </Card>
+                    </Col>
 
-                    <Grid
-                        item
-                        xs={12}
-                        md={6}
-                        sx={{
-                            display: { xs: 'none', md: 'block' },
+                    <Col
+                        xs={0}
+                        md={14}
+                        style={{
                             position: 'relative',
                             overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
                         }}
                     >
-                        <Box
-                            sx={{
+                        <div
+                            style={{
                                 position: 'absolute',
                                 inset: 0,
                                 background:
                                     'radial-gradient(circle at top left, rgba(255,255,255,0.18), transparent 55%), radial-gradient(circle at bottom right, rgba(59,130,246,0.25), transparent 55%)',
                             }}
                         />
-                        <Box
-                            sx={{
+                        <div
+                            style={{
                                 position: 'relative',
                                 zIndex: 1,
                                 height: '100%',
@@ -315,23 +307,25 @@ const LoginPage = ({ role }) => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'center',
-                                px: 8,
-                                py: 6,
-                                gap: 3,
+                                padding: '48px',
+                                gap: 12,
                             }}
-                                >
-                            <Typography variant="h3" sx={{ fontWeight: 700, maxWidth: 480, lineHeight: 1.1 }}>
+                        >
+                            <Typography.Title
+                                level={2}
+                                style={{ fontWeight: 700, maxWidth: 480, lineHeight: 1.1 }}
+                            >
                                 Quản lý hoạt động câu lạc bộ trong một nền tảng.
-                            </Typography>
-                            <Typography variant="body1" sx={{ maxWidth: 480, opacity: 0.85 }}>
+                            </Typography.Title>
+                            <Typography.Paragraph style={{ maxWidth: 480, opacity: 0.85 }}>
                                 Theo dõi sự kiện, đăng ký tham gia CLB, quản lý thành viên và báo cáo thu chi
                                 một cách trực quan, tập trung.
-                            </Typography>
-                        </Box>
-                    </Grid>
-                </Box>
-            </Grid>
-        </ThemeProvider>
+                            </Typography.Paragraph>
+                        </div>
+                    </Col>
+                </Row>
+            </div>
+        </div>
     );
 }
 
