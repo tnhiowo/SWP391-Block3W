@@ -55,11 +55,6 @@ const LoginPage = ({ role }) => {
         if (name === 'studentName') setStudentNameError(false);
     };
 
-    const guestModeHandler = () => {
-        // TODO: Logic login guest ở đây
-        console.log('Guest login clicked for role: ', role);
-    }
-
     return (
         <div
             style={{
@@ -240,21 +235,6 @@ const LoginPage = ({ role }) => {
                                         }}
                                     >
                                         Đăng nhập
-                                    </Button>
-
-                                    <Button
-                                        block
-                                        onClick={guestModeHandler}
-                                        style={{
-                                            marginTop: 12,
-                                            marginBottom: 8,
-                                            padding: '10px 0',
-                                            color: '#7f56da',
-                                            borderColor: '#d0b4ff',
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        Truy cập nhanh (khách)
                                     </Button>
 
                                     {role === 'Admin' && (

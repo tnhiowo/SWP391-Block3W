@@ -32,12 +32,12 @@ const Homepage = () => {
               </Title>
 
               <Subtitle>
-                Khám phá các câu lạc bộ trong trường, đăng ký tham gia sự kiện, theo dõi hoạt động
-                ngoại khóa và quản lý thành viên một cách dễ dàng, trực quan.
+                Khám phá các câu lạc bộ trong trường, đăng ký tham gia, theo dõi hoạt động
+                và quản lý thành viên một cách dễ dàng, trực quan.
               </Subtitle>
 
               <ActionsBox>
-                <StyledLink to="/login">
+                <StyledLink to="/choose-role">
                   <Button
                     type="primary"
                     block
@@ -52,22 +52,7 @@ const Homepage = () => {
                   </Button>
                 </StyledLink>
 
-                <StyledLink to="/chooseasguest">
-                  <Button
-                    block
-                    size="large"
-                    style={{
-                      marginTop: 16,
-                      color: '#7f56da',
-                      borderColor: '#c4a8ff',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Xem nhanh với tư cách khách
-                  </Button>
-                </StyledLink>
-
-                <Typography.Text style={{ marginTop: 16, color: 'rgba(55,65,81,1)', display: 'block' }}>
+                <Typography.Text style={{ marginTop: 20, color: 'rgba(55,65,81,1)', display: 'block' }}>
                   Chưa có tài khoản?{' '}
                   <Link to="/Adminregister" style={{ color: '#5b21b6', fontWeight: 600 }}>
                     Đăng ký ngay
