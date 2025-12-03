@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Homepage from './pages/general/HomePage';
 import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import ChooseRole from './pages/general/ChooseRole';
 import AdminLayout from './layouts/AdminLayout';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/choose-role" element={<ChooseRole />} />
 
         <Route path="/admin" element={<AdminLayout />}>

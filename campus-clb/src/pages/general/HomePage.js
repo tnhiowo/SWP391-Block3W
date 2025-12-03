@@ -54,7 +54,7 @@ const Homepage = () => {
 
                 <Typography.Text style={{ marginTop: 20, color: 'rgba(55,65,81,1)', display: 'block' }}>
                   Chưa có tài khoản?{' '}
-                  <Link to="/Adminregister" style={{ color: '#5b21b6', fontWeight: 600 }}>
+                  <Link to="/register" style={{ color: '#5b21b6', fontWeight: 600 }}>
                     Đăng ký ngay
                   </Link>
                 </Typography.Text>
