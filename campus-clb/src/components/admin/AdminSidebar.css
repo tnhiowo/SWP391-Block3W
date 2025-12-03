@@ -10,11 +10,29 @@
 .admin-sidebar-header {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .admin-sidebar-logo {
   font-size: 18px;
   font-weight: 600;
+}
+
+.admin-sidebar-notification {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.admin-sidebar-notification:hover {
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 .admin-sidebar-menu {

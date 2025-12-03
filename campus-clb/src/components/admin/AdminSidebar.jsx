@@ -18,6 +18,11 @@ const menuItems = [
     path: '/admin/invoices',
     icon: '💳',
   },
+  {
+    label: 'Admin Profile',
+    path: '/admin/profile',
+    icon: '🧑‍💼',
+  },
 ];
 
 export default function AdminSidebar() {
@@ -25,6 +30,13 @@ export default function AdminSidebar() {
     <aside className="admin-sidebar">
       <div className="admin-sidebar-header">
         <span className="admin-sidebar-logo">Campus Club Admin</span>
+        <button
+          type="button"
+          className="admin-sidebar-notification"
+          aria-label="Notifications"
+        >
+          🔔
+        </button>
       </div>
 
       <nav className="admin-sidebar-menu">

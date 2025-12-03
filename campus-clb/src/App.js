@@ -7,6 +7,7 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminClubsPage from './pages/admin/AdminClubsPage';
 import AdminInvoicesPage from './pages/admin/AdminInvoicesPage';
+import AdminProfilePage from './pages/admin/AdminProfilePage';
 import './App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="clubs" element={<AdminClubsPage />} />
           <Route path="invoices" element={<AdminInvoicesPage />} />
+          <Route path="profile" element={<AdminProfilePage />} />
           <Route index element={<Navigate to="users" replace />} />
         </Route>
 
