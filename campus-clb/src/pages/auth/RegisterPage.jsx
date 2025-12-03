@@ -223,21 +223,6 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              <div className="form-group">
-                <label htmlFor="role" className="form-label">
-                  Vai trò đăng ký
-                </label>
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="form-select"
-                >
-                  <option value="Student">Sinh viên</option>
-                  <option value="Club Leader">Chủ nhiệm CLB</option>
-                </select>
-              </div>
 
               <div className="form-group">
                 <label className="checkbox-label">
