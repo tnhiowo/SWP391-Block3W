@@ -49,6 +49,11 @@ export default function Student() {
     const [detailOpen, setDetailOpen] = useState(false);
     const [detailClub, setDetailClub] = useState(null);
 
+    // MoMo payment dialog (QR)
+    const [momoOpen, setMomoOpen] = useState(false);
+    const [momoData, setMomoData] = useState("");
+    const [momoReq, setMomoReq] = useState(null);
+
     // Profile management
     const [profileAnchorEl, setProfileAnchorEl] = useState(null);
     const profileMenuOpen = Boolean(profileAnchorEl);
@@ -243,6 +248,27 @@ export default function Student() {
         const updated = requests.map((r) => (r === req ? { ...r, feePaid: true, status: "approved" } : r));
         setRequests(updated);
         setSnack({ open: true, message: `Đã thanh toán phí cho ${req.clubName}. Yêu cầu được phê duyệt.`, severity: "success" });
+    };
+
+    // open MoMo QR dialog (demo)
+    const openMomo = (req) => {
+        if (!req) return;
+        const data = `MOMO|club:${req.clubName}|amount:${req.feeAmount}|email:${req.email}|order:${req.requestedAt}`;
+        setMomoData(data);
+        setMomoReq(req);
+        setMomoOpen(true);
+    };
+    const closeMomo = () => {
+        setMomoOpen(false);
+        setMomoData("");
+        setMomoReq(null);
+    };
+    const confirmMomoPaid = () => {
+        if (!momoReq) return;
+        const updated = requests.map((r) => (r === momoReq ? { ...r, feePaid: true, status: "approved" } : r));
+        setRequests(updated);
+        setSnack({ open: true, message: `Thanh toán MoMo thành công cho ${momoReq.clubName} (demo).`, severity: "success" });
+        closeMomo();
     };
 
     const totalRevenue = useMemo(() => {
@@ -471,6 +497,26 @@ export default function Student() {
                 </Box>
             </Dialog>
 
+            {/* MoMo QR dialog (demo) */}
+            <Dialog open={momoOpen} onClose={closeMomo} maxWidth="xs" fullWidth>
+                <DialogTitle>Thanh toán MoMo</DialogTitle>
+                <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <Typography variant="body2" color="text.secondary">Quét mã dưới đây bằng ứng dụng MoMo để thanh toán (demo)</Typography>
+                    {momoData ? (
+                        <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(momoData)}`}
+                            alt="MoMo QR"
+                            style={{ width: "100%", maxWidth: 300 }}
+                        />
+                    ) : null}
+                    <Typography variant="caption" color="text.secondary">Nội dung: {momoReq ? `${momoReq.clubName} • ${momoReq.feeAmount?.toLocaleString() || 0} VND` : "-"}</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeMomo}>Hủy</Button>
+                    <Button onClick={confirmMomoPaid} variant="contained">Đã thanh toán (demo)</Button>
+                </DialogActions>
+            </Dialog>
+
             {/* Profile dialog */}
             <Dialog open={profileDialogOpen} onClose={closeProfileDialog}>
                 <DialogTitle>
@@ -528,9 +574,12 @@ export default function Student() {
                                     <Typography variant="subtitle2">{r.clubName}</Typography>
                                     <Typography variant="caption" color="text.secondary">{r.name} • {r.status} • {r.feePaid ? "Đã đóng phí" : "Chưa đóng phí"}</Typography>
                                 </Box>
-                                <Box>
+                                <Box sx={{ display: "flex", gap: 1 }}>
                                     {!r.feePaid && r.feeAmount > 0 ? (
-                                        <Button size="small" variant="contained" onClick={() => handlePayFee(r)}>Thanh toán</Button>
+                                        <>
+                                            {/* <Button size="small" variant="contained" onClick={() => handlePayFee(r)}>Thanh toán</Button> */}
+                                            <Button size="small" variant="outlined" onClick={() => openMomo(r)}>Thanh toán MoMo</Button>
+                                        </>
                                     ) : null}
                                 </Box>
                             </Box>
