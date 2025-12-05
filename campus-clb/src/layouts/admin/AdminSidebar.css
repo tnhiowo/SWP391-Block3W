@@ -1,5 +1,22 @@
 .admin-sidebar {
-  background-color: #001529;
+  background: #0a1626;
+  min-height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-sidebar .ant-menu {
+  background: transparent;
+  padding: 12px 0;
+}
+
+.admin-sidebar .ant-menu-item-selected {
+  background: linear-gradient(135deg, #1b2c47 0%, #0f2038 100%) !important;
+  border-radius: 10px;
+}
+
+.admin-sidebar .ant-menu-item {
+  margin: 4px 12px;
+  border-radius: 10px;
 }
 
 .admin-sidebar-header {
@@ -7,29 +24,11 @@
   padding: 0 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   color: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.admin-sidebar-logo {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.admin-sidebar-notification {
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-}
-
-.admin-sidebar-notification:hover {
-  background-color: rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
 

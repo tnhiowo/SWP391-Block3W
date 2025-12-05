@@ -5,7 +5,7 @@ import {
   DashboardOutlined,
   UserOutlined,
   TeamOutlined,
-  FileTextOutlined,
+  AuditOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import { adminChildRoutes } from '../../routes/adminRoutes';
@@ -17,7 +17,7 @@ const iconMap = {
   dashboard: <DashboardOutlined />,
   users: <UserOutlined />,
   clubs: <TeamOutlined />,
-  invoices: <FileTextOutlined />,
+  invoices: <AuditOutlined />,
   profile: <SettingOutlined />,
 };
 
@@ -42,12 +42,9 @@ export default function AdminSidebar() {
   );
 
   return (
-    <Sider className="admin-sidebar" width={240}>
+    <Sider className="admin-sidebar" width={250} breakpoint="lg" collapsedWidth={72}>
       <div className="admin-sidebar-header">
-        <span className="admin-sidebar-logo">Campus Club Admin</span>
-        <button type="button" className="admin-sidebar-notification" aria-label="Thông báo">
-          🔔
-        </button>
+        <span className="admin-sidebar-logo">Campus Club Admin 🔔</span>
       </div>
       <Menu
         theme="dark"
