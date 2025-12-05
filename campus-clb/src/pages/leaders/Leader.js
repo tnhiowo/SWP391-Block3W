@@ -1,29 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  TextField,
-  Typography,
-  Grid,
   Avatar,
+  Button,
   Card,
-  CardContent,
-  CardActions,
+  Col,
   Divider,
-  Snackbar,
-} from "@mui/material";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+  Input,
+  Modal,
+  Row,
+  Space,
+  Statistic,
+  Typography,
+  message,
+} from "antd";
+import { CheckOutlined, CloseOutlined, EditOutlined, DeleteOutlined, DollarOutlined } from "@ant-design/icons";
 
 const REQ_KEY = "campus_join_requests";
 const MEMBERS_KEY = "campus_members";
@@ -67,7 +57,7 @@ export default function Leader() {
     if (feeRequired && !req.feePaid) {
       // If fee not yet paid, mark invoiceSent and notify
       setRequests(prev => prev.map(r => r === req ? { ...r, invoiceSent: true } : r));
-      setSnack({ open: true, message: "Yêu cầu chưa đóng phí. Hệ thống đã gửi yêu cầu thu phí đến học sinh (demo)." });
+      message.warning("Yêu cầu chưa đóng phí. Đã đánh dấu gửi yêu cầu thu phí (demo).");
       return;
     }
     // create member entry
@@ -85,12 +75,12 @@ export default function Leader() {
     };
     setMembers(prev => [newMember, ...prev]);
     setRequests(prev => prev.filter(r => r !== req));
-    setSnack({ open: true, message: `Đã phê duyệt và thêm ${req.name} là thành viên của ${req.clubName}.` });
+    message.success(`Đã phê duyệt và thêm ${req.name} vào ${req.clubName}.`);
   };
 
   const rejectRequest = (req) => {
     setRequests(prev => prev.map(r => r === req ? { ...r, status: "rejected" } : r));
-    setSnack({ open: true, message: `Đã từ chối yêu cầu của ${req.name}.` });
+    message.info(`Đã từ chối yêu cầu của ${req.name}.`);
   };
 
   const openAddMember = () => {
@@ -105,16 +95,16 @@ export default function Leader() {
 
   const saveMember = () => {
     if (!editingMember.name || !editingMember.email || !editingMember.clubName) {
-      setSnack({ open: true, message: "Vui lòng điền tên, email và tên CLB." });
+      message.error("Vui lòng điền tên, email và tên CLB.");
       return;
     }
     if (editingMember.id) {
       setMembers(prev => prev.map(mm => (mm.id === editingMember.id ? editingMember : mm)));
-      setSnack({ open: true, message: "Cập nhật thành viên thành công." });
+      message.success("Cập nhật thành viên thành công.");
     } else {
       const newMember = { ...editingMember, id: `M${Date.now()}`, joinedAt: new Date().toISOString(), paidOut: false, payoutAmount: 0 };
       setMembers(prev => [newMember, ...prev]);
-      setSnack({ open: true, message: "Thêm thành viên thành công." });
+      message.success("Thêm thành viên thành công.");
     }
     setMemberDialogOpen(false);
     setEditingMember(null);
@@ -122,7 +112,7 @@ export default function Leader() {
 
   const deleteMember = (m) => {
     setMembers(prev => prev.filter(mm => mm.id !== m.id));
-    setSnack({ open: true, message: "Xóa thành viên thành công." });
+    message.success("Xóa thành viên thành công.");
   };
 
   // Send payout to member (simulate leader sending money)
@@ -130,123 +120,160 @@ export default function Leader() {
     const amount = Number(prompt("Nhập số tiền gửi cho thành viên (VND):", m.payoutAmount || 0) || 0);
     if (!amount || amount <= 0) return;
     setMembers(prev => prev.map(mm => mm.id === m.id ? { ...mm, paidOut: true, payoutAmount: amount } : mm));
-    setSnack({ open: true, message: `Đã gửi ${amount.toLocaleString()} VND đến ${m.name} (demo).` });
+    message.success(`Đã gửi ${amount.toLocaleString()} VND đến ${m.name} (demo).`);
   };
 
   // Manual: import requests from localStorage (in case student pushed there)
   const reloadRequests = () => {
     const r = localStorage.getItem(REQ_KEY);
     setRequests(r ? JSON.parse(r) : []);
-    setSnack({ open: true, message: "Đã tải lại danh sách yêu cầu từ localStorage." });
+    message.success("Đã tải lại danh sách yêu cầu từ localStorage.");
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1100, mx: "auto" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>Leader - Quản lý CLB</Typography>
-        <Box>
-          <Button variant={view === "requests" ? "contained" : "outlined"} onClick={() => setView("requests")} sx={{ mr: 1 }}>Yêu cầu ({requests.filter(r => r.status === "pending").length})</Button>
-          <Button variant={view === "members" ? "contained" : "outlined"} onClick={() => setView("members")} sx={{ mr: 1 }}>Thành viên ({members.length})</Button>
-          <Button onClick={reloadRequests} size="small">Tải lại yêu cầu</Button>
-        </Box>
-      </Box>
+    <div style={{ padding: "24px 16px", maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <Typography.Title level={4} style={{ margin: 0 }}>Leader - Quản lý CLB</Typography.Title>
+        <Space>
+          <Button type={view === "requests" ? "primary" : "default"} onClick={() => setView("requests")}>
+            Yêu cầu ({requests.filter(r => r.status === "pending").length})
+          </Button>
+          <Button type={view === "members" ? "primary" : "default"} onClick={() => setView("members")}>
+            Thành viên ({members.length})
+          </Button>
+          <Button onClick={reloadRequests}>Tải lại yêu cầu</Button>
+        </Space>
+      </div>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Typography variant="subtitle2">Báo cáo nhanh</Typography>
-        <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
-          <Paper sx={{ p: 1, minWidth: 160 }}><Typography variant="caption">Yêu cầu chờ</Typography><Typography variant="h6">{stats.pending}</Typography></Paper>
-          <Paper sx={{ p: 1, minWidth: 160 }}><Typography variant="caption">Thành viên</Typography><Typography variant="h6">{stats.membersCount}</Typography></Paper>
-          <Paper sx={{ p: 1, minWidth: 160 }}><Typography variant="caption">Doanh thu thu được</Typography><Typography variant="h6">{stats.totalCollected.toLocaleString()} VND</Typography></Paper>
-          <Paper sx={{ p: 1, minWidth: 160 }}><Typography variant="caption">Tổng đã gửi cho thành viên</Typography><Typography variant="h6">{stats.totalPayout.toLocaleString()} VND</Typography></Paper>
-        </Box>
-      </Paper>
+      <Card size="small" style={{ marginBottom: 16 }}>
+        <Typography.Text strong>Báo cáo nhanh</Typography.Text>
+        <Divider style={{ margin: "8px 0 12px" }} />
+        <Row gutter={[12, 12]}>
+          <Col xs={12} sm={6}><Card size="small"><Statistic title="Yêu cầu chờ" value={stats.pending} /></Card></Col>
+          <Col xs={12} sm={6}><Card size="small"><Statistic title="Thành viên" value={stats.membersCount} /></Card></Col>
+          <Col xs={12} sm={6}><Card size="small"><Statistic title="Doanh thu thu được" value={stats.totalCollected} suffix="VND" /></Card></Col>
+          <Col xs={12} sm={6}><Card size="small"><Statistic title="Tổng đã gửi cho thành viên" value={stats.totalPayout} suffix="VND" /></Card></Col>
+        </Row>
+      </Card>
 
       {view === "requests" && (
-        <Grid container spacing={2}>
-          {requests.length === 0 && <Grid item xs={12}><Typography color="text.secondary">Không có yêu cầu.</Typography></Grid>}
+        <Row gutter={[12, 12]}>
+          {requests.length === 0 && (
+            <Col span={24}><Typography.Text type="secondary">Không có yêu cầu.</Typography.Text></Col>
+          )}
           {requests.map((req) => (
-            <Grid item xs={12} md={6} key={req.requestedAt + req.email}>
-              <Card>
-                <CardContent sx={{ display: "flex", gap: 2 }}>
-                  <Avatar><AccountCircleIcon /></Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle1">{req.name} <Typography component="span" color="text.secondary">({req.email})</Typography></Typography>
-                    <Typography variant="caption" color="text.secondary">{req.clubName} • {req.status} {req.invoiceSent ? "• Invoice sent" : ""}</Typography>
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="body2">{req.feeAmount && req.feeAmount > 0 ? `Phí: ${req.feeAmount.toLocaleString()} VND` : "Miễn phí"}</Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-                <CardActions>
-                  <Button startIcon={<CheckIcon />} onClick={() => approveRequest(req)} variant="contained" size="small">Phê duyệt</Button>
-                  <Button color="error" startIcon={<CloseIcon />} onClick={() => rejectRequest(req)} size="small">Từ chối</Button>
-                  {req.feeAmount > 0 && !req.feePaid && !req.invoiceSent && (
-                    <Button startIcon={<AttachMoneyIcon />} onClick={() => {
-                      // mark invoice sent
-                      setRequests(prev => prev.map(r => r === req ? { ...r, invoiceSent: true } : r));
-                      setSnack({ open: true, message: "Đã gửi yêu cầu thu phí (demo)." });
-                    }} size="small">Gửi hóa đơn</Button>
-                  )}
-                </CardActions>
+            <Col xs={24} md={12} key={req.requestedAt + req.email}>
+              <Card
+                title={
+                  <Space>
+                    <Avatar>{req.name?.charAt(0)?.toUpperCase() || "U"}</Avatar>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{req.name} <Typography.Text type="secondary">({req.email})</Typography.Text></div>
+                      <Typography.Text type="secondary">{req.clubName} • {req.status} {req.invoiceSent ? "• Đã gửi hóa đơn" : ""}</Typography.Text>
+                    </div>
+                  </Space>
+                }
+                actions={[
+                  <Button type="link" icon={<CheckOutlined />} onClick={() => approveRequest(req)} key="approve">Phê duyệt</Button>,
+                  <Button type="link" danger icon={<CloseOutlined />} onClick={() => rejectRequest(req)} key="reject">Từ chối</Button>,
+                  req.feeAmount > 0 && !req.feePaid && !req.invoiceSent ? (
+                    <Button
+                      type="link"
+                      icon={<DollarOutlined />}
+                      key="invoice"
+                      onClick={() => {
+                        setRequests(prev => prev.map(r => r === req ? { ...r, invoiceSent: true } : r));
+                        message.info("Đã gửi yêu cầu thu phí (demo).");
+                      }}
+                    >
+                      Gửi hóa đơn
+                    </Button>
+                  ) : null,
+                ]}
+              >
+                <Typography.Paragraph style={{ marginBottom: 0 }}>
+                  {req.feeAmount && req.feeAmount > 0 ? `Phí: ${req.feeAmount.toLocaleString()} VND` : "Miễn phí"}
+                </Typography.Paragraph>
               </Card>
-            </Grid>
+            </Col>
           ))}
-        </Grid>
+        </Row>
       )}
 
       {view === "members" && (
-        <Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6">Danh sách thành viên</Typography>
-            <Box>
-              <Button onClick={openAddMember} variant="contained" sx={{ mr: 1 }}>Thêm thành viên</Button>
-            </Box>
-          </Box>
-
-          <Grid container spacing={2}>
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <Typography.Title level={5} style={{ margin: 0 }}>Danh sách thành viên</Typography.Title>
+            <Button type="primary" onClick={openAddMember}>Thêm thành viên</Button>
+          </div>
+          <Row gutter={[12, 12]}>
             {members.map((m) => (
-              <Grid item xs={12} md={6} key={m.id}>
-                <Card>
-                  <CardContent sx={{ display: "flex", gap: 2 }}>
-                    <Avatar><AccountCircleIcon /></Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle1">{m.name} <Typography component="span" color="text.secondary">({m.email})</Typography></Typography>
-                      <Typography variant="caption" color="text.secondary">{m.clubName} • Joined {new Date(m.joinedAt).toLocaleDateString()}</Typography>
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="body2">Phí đóng: {m.feePaid ? `${m.feeAmount.toLocaleString()} VND` : "Chưa đóng"}</Typography>
-                        <Typography variant="body2">Đã nhận tiền leader: {m.paidOut ? `${m.payoutAmount.toLocaleString()} VND` : "-"}</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                  <CardActions>
-                    <Button startIcon={<EditIcon />} onClick={() => editMember(m)} size="small">Sửa</Button>
-                    <Button startIcon={<DeleteIcon />} color="error" onClick={() => deleteMember(m)} size="small">Xóa</Button>
-                    <Button startIcon={<AttachMoneyIcon />} onClick={() => sendPayout(m)} size="small">Gửi phí</Button>
-                  </CardActions>
+              <Col xs={24} md={12} key={m.id}>
+                <Card
+                  title={
+                    <Space>
+                      <Avatar>{m.name?.charAt(0)?.toUpperCase() || "U"}</Avatar>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{m.name} <Typography.Text type="secondary">({m.email})</Typography.Text></div>
+                        <Typography.Text type="secondary">{m.clubName} • {new Date(m.joinedAt).toLocaleDateString()}</Typography.Text>
+                      </div>
+                    </Space>
+                  }
+                  actions={[
+                    <Button type="link" icon={<EditOutlined />} onClick={() => editMember(m)} key="edit">Sửa</Button>,
+                    <Button type="link" danger icon={<DeleteOutlined />} onClick={() => deleteMember(m)} key="delete">Xóa</Button>,
+                    <Button type="link" icon={<DollarOutlined />} onClick={() => sendPayout(m)} key="payout">Gửi phí</Button>,
+                  ]}
+                >
+                  <Typography.Paragraph style={{ marginBottom: 4 }}>
+                    Phí đóng: {m.feePaid ? `${m.feeAmount.toLocaleString()} VND` : "Chưa đóng"}
+                  </Typography.Paragraph>
+                  <Typography.Paragraph style={{ marginBottom: 0 }}>
+                    Đã nhận tiền leader: {m.paidOut ? `${m.payoutAmount.toLocaleString()} VND` : "-"}
+                  </Typography.Paragraph>
                 </Card>
-              </Grid>
+              </Col>
             ))}
-            {members.length === 0 && <Grid item xs={12}><Typography color="text.secondary">Chưa có thành viên.</Typography></Grid>}
-          </Grid>
-        </Box>
+            {members.length === 0 && (
+              <Col span={24}><Typography.Text type="secondary">Chưa có thành viên.</Typography.Text></Col>
+            )}
+          </Row>
+        </div>
       )}
 
-      {/* Add/Edit member dialog */}
-      <Dialog open={memberDialogOpen} onClose={() => setMemberDialogOpen(false)}>
-        <DialogTitle>{editingMember && editingMember.id ? "Sửa thành viên" : "Thêm thành viên"}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 360 }}>
-          <TextField label="Họ và tên" value={editingMember?.name || ""} onChange={(e) => setEditingMember(m => ({ ...m, name: e.target.value }))} />
-          <TextField label="Email" value={editingMember?.email || ""} onChange={(e) => setEditingMember(m => ({ ...m, email: e.target.value }))} />
-          <TextField label="Tên CLB" value={editingMember?.clubName || ""} onChange={(e) => setEditingMember(m => ({ ...m, clubName: e.target.value }))} />
-          <TextField label="Phí đã đóng (VND)" type="number" value={editingMember?.feeAmount || 0} onChange={(e) => setEditingMember(m => ({ ...m, feeAmount: Number(e.target.value) }))} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => { setMemberDialogOpen(false); setEditingMember(null); }}>Hủy</Button>
-          <Button onClick={saveMember} variant="contained">Lưu</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack({ open: false, message: "" })} message={snack.message} />
-    </Box>
+      {/* Add/Edit member modal */}
+      <Modal
+        open={memberDialogOpen}
+        onCancel={() => { setMemberDialogOpen(false); setEditingMember(null); }}
+        title={editingMember && editingMember.id ? "Sửa thành viên" : "Thêm thành viên"}
+        onOk={saveMember}
+        okText="Lưu"
+        cancelText="Hủy"
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Input
+            placeholder="Họ và tên"
+            value={editingMember?.name || ""}
+            onChange={(e) => setEditingMember(m => ({ ...m, name: e.target.value }))}
+          />
+          <Input
+            placeholder="Email"
+            value={editingMember?.email || ""}
+            onChange={(e) => setEditingMember(m => ({ ...m, email: e.target.value }))}
+          />
+          <Input
+            placeholder="Tên CLB"
+            value={editingMember?.clubName || ""}
+            onChange={(e) => setEditingMember(m => ({ ...m, clubName: e.target.value }))}
+          />
+          <Input
+            placeholder="Phí đã đóng (VND)"
+            type="number"
+            value={editingMember?.feeAmount || 0}
+            onChange={(e) => setEditingMember(m => ({ ...m, feeAmount: Number(e.target.value) }))}
+          />
+        </Space>
+      </Modal>
+    </div>
   );
 }
