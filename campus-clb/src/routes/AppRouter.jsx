@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import generalRoutes from './generalRoutes';
 import authRoutes from './authRoutes';
 import adminRoutes from './adminRoutes';
+import NotFound from '../pages/general/NotFound';
 
 export default function AppRouter() {
   return (
@@ -31,6 +32,9 @@ export default function AppRouter() {
             )}
           </Route>
         ))}
+
+        <Route path="/not-found" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/not-found" replace />} />
       </Routes>
     </BrowserRouter>
   );

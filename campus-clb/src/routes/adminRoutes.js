@@ -4,7 +4,7 @@ import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminClubsPage from '../pages/admin/AdminClubsPage';
 import AdminInvoicesPage from '../pages/admin/AdminInvoicesPage';
 import AdminProfilePage from '../pages/admin/AdminProfilePage';
-// import NotFound from '../pages/general/NotFound';
+import { Navigate } from 'react-router-dom';
 
 export const adminChildRoutes = [
   {
@@ -61,11 +61,11 @@ const adminRoutes = [
           key: route.key,
         };
       }),
-      // {
-      //   path: '*',
-      //   element: <NotFound />,
-      //   key: 'admin-not-found',
-      // },
+      {
+        path: '*',
+        element: <Navigate to="/not-found" replace />,
+        key: 'admin-not-found',
+      },
     ],
   },
 ];
