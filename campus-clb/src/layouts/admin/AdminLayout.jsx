@@ -1,8 +1,7 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { Layout, Typography, Button } from 'antd';
 import AdminSidebar from './AdminSidebar';
-import { adminChildRoutes } from '../../routes/adminRoutes';
 import './AdminLayout.css';
 
 const { Header, Content } = Layout;
@@ -30,19 +29,7 @@ export default function AdminLayout() {
           </div>
         </Header>
         <Content className="admin-content">
-          <Routes>
-            {adminChildRoutes.map((route) =>
-              route.isIndex ? (
-                <Route key={route.key} index element={route.element} />
-              ) : (
-                <Route
-                  key={route.key}
-                  path={route.path}
-                  element={route.element}
-                />
-              )
-            )}
-          </Routes>
+          <Outlet />
         </Content>
       </Layout>
     </Layout>

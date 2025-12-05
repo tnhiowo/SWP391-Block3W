@@ -17,7 +17,19 @@ export default function AppRouter() {
         ))}
 
         {adminRoutes.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
+          <Route key={route.path} path={route.path} element={route.element}>
+            {route.children?.map((child) =>
+              child.index ? (
+                <Route key={child.key || 'index'} index element={child.element} />
+              ) : (
+                <Route
+                  key={child.key || child.path}
+                  path={child.path}
+                  element={child.element}
+                />
+              )
+            )}
+          </Route>
         ))}
       </Routes>
     </BrowserRouter>
