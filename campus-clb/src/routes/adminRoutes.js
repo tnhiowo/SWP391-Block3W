@@ -4,6 +4,7 @@ import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminClubsPage from '../pages/admin/AdminClubsPage';
 import AdminInvoicesPage from '../pages/admin/AdminInvoicesPage';
 import AdminProfilePage from '../pages/admin/AdminProfilePage';
+// import NotFound from '../pages/general/NotFound';
 
 export const adminChildRoutes = [
   {
@@ -47,8 +48,25 @@ export const adminChildRoutes = [
 
 const adminRoutes = [
   {
-    path: '/admin/*',
+    path: '/admin',
     element: <AdminLayout />,
+    children: [
+      ...adminChildRoutes.map((route) => {
+        if (route.isIndex) {
+          return { index: true, element: route.element, key: route.key };
+        }
+        return {
+          path: route.path,
+          element: route.element,
+          key: route.key,
+        };
+      }),
+      // {
+      //   path: '*',
+      //   element: <NotFound />,
+      //   key: 'admin-not-found',
+      // },
+    ],
   },
 ];
 
