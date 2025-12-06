@@ -2,7 +2,6 @@
 
 import { createContext,useContext,useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { authApiService } from "../services/authApiService";
 import { userApiService } from "../services/userApiService";
 
@@ -76,7 +75,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("authUser");
         setUser(null);
         navigate("/login");
-        toast.success("Đã đăng xuất hẹn gặp lại!");
     };
 
     return (
