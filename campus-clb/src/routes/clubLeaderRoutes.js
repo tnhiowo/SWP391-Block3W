@@ -51,7 +51,6 @@ const clubLeaderRoutes = [
         path: "/club-leader",
         element: <ClubLeaderLayout />,
         children: [
-            // Các route con từ mảng trên
             ...clubLeaderChildRoutes.map((route) => {
                 if (route.isIndex) {
                     return { index: true,element: route.element,key: route.key };

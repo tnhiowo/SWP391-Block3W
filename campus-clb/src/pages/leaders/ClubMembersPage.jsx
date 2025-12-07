@@ -97,10 +97,18 @@ export default function ClubMembersPage() {
   const handleRemove = async (memberId) => {
     try {
       await clubMemberApiService.removeMember(memberId);
-      message.success(
-        activeTab === "pending" ? "Đã từ chối" : "Đã xóa thành viên"
-      );
-      activeTab === "approved" ? fetchApprovedMembers() : fetchPendingMembers();
+      message.success("Đã xóa thành viên");
+      fetchApprovedMembers();
+    } catch {
+      message.error("Thao tác thất bại");
+    }
+  };
+
+  const handleReject = async (memberId) => {
+    try {
+      await clubMemberApiService.rejectMember(memberId);
+      message.success("Đã từ chối");
+      fetchPendingMembers();
     } catch {
       message.error("Thao tác thất bại");
     }
@@ -229,7 +237,7 @@ export default function ClubMembersPage() {
             />
             <Popconfirm
               title="Duyệt thành viên này?"
-              onConfirm={() => handleApprove(record.memberId)}
+              onConfirm={() => handleApprove(record.requestId)}
               okText="Duyệt"
               cancelText="Hủy"
             >
@@ -237,7 +245,7 @@ export default function ClubMembersPage() {
             </Popconfirm>
             <Popconfirm
               title="Từ chối yêu cầu này?"
-              onConfirm={() => handleRemove(record.memberId)}
+              onConfirm={() => handleReject(record.requestId)}
               okText="Từ chối"
               cancelText="Hủy"
             >
@@ -360,7 +368,7 @@ export default function ClubMembersPage() {
               <Popconfirm
                 title="Từ chối yêu cầu này?"
                 onConfirm={() => {
-                  handleRemove(selectedMember.memberId);
+                  handleReject(selectedMember.requestId);
                   setIsModalOpen(false);
                 }}
                 okText="Từ chối"

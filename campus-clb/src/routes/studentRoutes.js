@@ -1,6 +1,8 @@
 import { Navigate } from "react-router-dom";
 import StudentLayout from "../layouts/student/StudentLayout";
 import StudentDashboardPage from "../pages/students/StudentDashboardPage";
+import PublicClubsPage from "../pages/students/PublicClubsPage";
+import ClubDetailPage from "../pages/students/ClubDetailPage";
 
 
 export const studentChildRoutes = [
@@ -12,13 +14,21 @@ export const studentChildRoutes = [
         element: <StudentDashboardPage />,
         isIndex: true,
     },
-    // {
-    //     path: "clubs",
-    //     key: "clubs",
-    //     label: "Câu lạc bộ",
-    //     iconKey: "clubs",
-    //     element: <StudentClubsPage />,
-    // },
+    {
+        path: "clubs",
+        key: "clubs",
+        label: "Câu lạc bộ",
+        iconKey: "clubs",
+        element: <PublicClubsPage />,
+    },
+    {
+        path: "clubs/:id",
+        key: "clubs",
+        label: "Chi tiết CLB",
+        iconKey: "clubs",
+        element: <ClubDetailPage />,
+        showInSidebar: false,
+    },
     // {
     //     path: "events",
     //     key: "events",

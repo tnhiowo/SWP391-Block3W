@@ -32,9 +32,9 @@ const LoginPage = ({ role }) => {
 
       const userRole = res.data.role;
       if (userRole === "Admin") {
-        navigate("/admin/dashboard");
+        navigate("/admin");
       } else if (userRole === "Student") {
-        navigate("/student/dashboard");
+        navigate("/student");
       } else {
         navigate("/club-leader");
       }
