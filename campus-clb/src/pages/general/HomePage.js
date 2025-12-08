@@ -1,43 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Container,
-  Grid,
-  Box,
-  Button,
-  Typography,
-  Paper,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
+import { Button, Typography, Row, Col } from 'antd';
 import styled from 'styled-components';
-import Students from '../assets/students.svg';
-import { LightPurpleButton } from '../components/buttonStyles';
+import HomeBg from '../../assets/home-page.jpg';
 
 const Homepage = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   return (
     <PageWrapper>
       <GradientOverlay />
 
-      <StyledContainer maxWidth="lg">
-        <Grid container spacing={4} alignItems="center">
+      <StyledContainer>
+        <Row gutter={[32, 32]} align="middle">
           {/* Illustration */}
-          <Grid item xs={12} md={6}>
+          <Col xs={24} md={12}>
             <IllustrationBox>
               <IllustrationCircle />
-              <IllustrationImage src={Students} alt="Sinh viên & câu lạc bộ" />
             </IllustrationBox>
-          </Grid>
+          </Col>
 
           {/* Content */}
-          <Grid item xs={12} md={6}>
-            <StyledPaper elevation={8}>
+          <Col xs={24} md={12}>
+            <StyledPaper>
               <Badge>HỆ THỐNG CÂU LẠC BỘ</Badge>
 
-              <Title variant={isMobile ? 'h4' : 'h3'}>
+              <Title>
                 Kết nối, tham gia
                 <br />
                 và quản lý CLB trong
@@ -45,53 +31,42 @@ const Homepage = () => {
                 một nền tảng.
               </Title>
 
-              <Subtitle variant="body1">
-                Khám phá các câu lạc bộ trong trường, đăng ký tham gia sự kiện, theo dõi hoạt động
-                ngoại khóa và quản lý thành viên một cách dễ dàng, trực quan.
+              <Subtitle>
+                Khám phá các câu lạc bộ trong trường, đăng ký tham gia, theo dõi hoạt động
+                và quản lý thành viên một cách dễ dàng, trực quan.
               </Subtitle>
 
               <ActionsBox>
-                <StyledLink to="/choose">
-                  <LightPurpleButton variant="contained" fullWidth size="large">
-                    Đăng nhập để bắt đầu
-                  </LightPurpleButton>
-                </StyledLink>
-
-                <StyledLink to="/chooseasguest">
+                <StyledLink to="/choose-role">
                   <Button
-                    variant="outlined"
-                    fullWidth
+                    type="primary"
+                    block
                     size="large"
-                    sx={{
-                      mt: 1.5,
-                      color: '#7f56da',
-                      borderColor: '#c4a8ff',
-                      fontWeight: 500,
-                      '&:hover': {
-                        borderColor: '#7f56da',
-                        backgroundColor: 'rgba(127, 86, 218, 0.04)',
-                      },
+                    style={{
+                      backgroundColor: '#7f56da',
+                      fontWeight: 600,
+                      boxShadow: '0 12px 30px rgba(88, 28, 135, 0.35)',
                     }}
                   >
-                    Xem nhanh với tư cách khách
+                    Đăng nhập để bắt đầu
                   </Button>
                 </StyledLink>
 
-                <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
-                  Chưa có tài khoản quản trị?{' '}
-                  <Link to="/Adminregister" style={{ color: '#5b21b6', fontWeight: 600 }}>
-                    Đăng ký quản lý CLB
+                <Typography.Text style={{ marginTop: 20, color: 'rgba(55,65,81,1)', display: 'block' }}>
+                  Chưa có tài khoản?{' '}
+                  <Link to="/register" style={{ color: '#5b21b6', fontWeight: 600 }}>
+                    Đăng ký ngay
                   </Link>
-                </Typography>
+                </Typography.Text>
               </ActionsBox>
 
-              <FooterText variant="caption">
-                Theo dõi điểm rèn luyện, tỷ lệ tham gia hoạt động và xây dựng cộng đồng CLB năng động
+              <FooterText>
+                Theo dõi các hoạt động CLB, tỷ lệ tham gia hoạt động và xây dựng cộng đồng CLB năng động
                 trong khuôn viên trường.
               </FooterText>
             </StyledPaper>
-          </Grid>
-        </Grid>
+          </Col>
+        </Row>
       </StyledContainer>
     </PageWrapper>
   );
@@ -101,16 +76,21 @@ export default Homepage;
 
 // Styled components
 
-const PageWrapper = styled(Box)`
+const PageWrapper = styled.div`
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
-  background: radial-gradient(circle at top left, #f3e8ff 0%, #e0f2ff 35%, #fdf2ff 100%);
+  background-image:
+    linear-gradient(to bottom right, rgba(79, 70, 229, 0.6), rgba(236, 72, 153, 0.35)),
+    url(${HomeBg});
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 `;
 
-const GradientOverlay = styled(Box)`
+const GradientOverlay = styled.div`
   position: absolute;
   inset: 0;
   background:
@@ -119,14 +99,15 @@ const GradientOverlay = styled(Box)`
   pointer-events: none;
 `;
 
-const StyledContainer = styled(Container)`
+const StyledContainer = styled.div`
   position: relative;
   z-index: 1;
-  padding-top: 56px;
-  padding-bottom: 56px;
+  padding: 56px 16px;
+  max-width: 1120px;
+  margin: 0 auto;
 `;
 
-const IllustrationBox = styled(Box)`
+const IllustrationBox = styled.div`
   position: relative;
   display: flex;
   align-items: center;
@@ -134,7 +115,7 @@ const IllustrationBox = styled(Box)`
   padding: 24px;
 `;
 
-const IllustrationCircle = styled(Box)`
+const IllustrationCircle = styled.div`
   position: absolute;
   width: 380px;
   height: 380px;
@@ -149,7 +130,7 @@ const IllustrationImage = styled.img`
   z-index: 1;
 `;
 
-const StyledPaper = styled(Paper)`
+const StyledPaper = styled.div`
   border-radius: 24px;
   padding: 28px 24px;
   background-color: rgba(255, 255, 255, 0.92);
@@ -161,13 +142,15 @@ const StyledPaper = styled(Paper)`
   }
 `;
 
-const Badge = styled(Typography).attrs({ variant: 'overline' })`
+const Badge = styled.span`
   letter-spacing: 0.18em;
   font-weight: 700;
   color: #7f56da;
+  text-transform: uppercase;
+  font-size: 12px;
 `;
 
-const Title = styled(Typography)`
+const Title = styled.h2`
   margin-top: 12px;
   margin-bottom: 8px;
   color: #111827;
@@ -175,20 +158,20 @@ const Title = styled(Typography)`
   line-height: 1.15;
 `;
 
-const Subtitle = styled(Typography)`
+const Subtitle = styled.p`
   margin-top: 12px;
   margin-bottom: 20px;
   color: #4b5563;
 `;
 
-const ActionsBox = styled(Box)`
+const ActionsBox = styled.div`
   margin-top: 12px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
 `;
 
-const FooterText = styled(Typography)`
+const FooterText = styled.small`
   margin-top: 20px;
   color: #6b7280;
 `;

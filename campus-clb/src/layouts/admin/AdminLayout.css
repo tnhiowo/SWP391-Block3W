@@ -1,0 +1,63 @@
+.admin-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0b1626 0%, #0f1f36 45%, #0a1422 100%);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(14, 31, 54, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.admin-title-tag {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-weight: 700;
+}
+
+.admin-title-text {
+  color: #e5e7eb;
+  font-size: 18px;
+  font-weight: 700;
+  margin-left: 10px;
+}
+
+.ghost-btn {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.light-btn {
+  background: #fff;
+}
+
+.admin-content {
+  padding: 24px;
+}
+
+.admin-content-inner {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+  min-height: calc(100vh - 120px);
+}
+
+
