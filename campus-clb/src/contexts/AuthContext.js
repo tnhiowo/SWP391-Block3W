@@ -29,7 +29,23 @@ export const AuthProvider = ({ children }) => {
         try {
             const res = await authApiService.login(data);
 
-            const { token,userId,fullName,role,email,avatar } = res.data;
+            // Hỗ trợ nhiều dạng trả về: { token, role, ... } hoặc { Data: { Token, Role, ... } } hoặc { data: { ... } }
+            const payload = res?.data ?? res ?? {};
+            const dataBlock = payload.Data ?? payload.data ?? {};
+
+            const token = payload.token
+                ?? payload.Token
+                ?? payload.accessToken
+                ?? dataBlock.token
+                ?? dataBlock.Token
+                ?? dataBlock.accessToken;
+
+            const userId = payload.userId ?? payload.UserId ?? dataBlock.userId ?? dataBlock.UserId;
+            const fullName = payload.fullName ?? payload.FullName ?? dataBlock.fullName ?? dataBlock.FullName;
+            const role = payload.role ?? payload.Role ?? dataBlock.role ?? dataBlock.Role;
+            const email = payload.email ?? payload.Email ?? dataBlock.email ?? dataBlock.Email;
+            const avatar = payload.avatar ?? payload.Avatar ?? dataBlock.avatar ?? dataBlock.Avatar;
+
             const userData = {
                 userId,
                 username: email,
@@ -42,8 +58,8 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem("accessToken",token);
             localStorage.setItem("authUser",JSON.stringify(userData));
 
-            await loadUser();
-            return res;
+            setUser(userData);
+            return { ...payload, token, role, userId };
         } catch (err) {
             throw err;
         }

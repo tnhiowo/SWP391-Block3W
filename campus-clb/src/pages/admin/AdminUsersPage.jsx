@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Form,
@@ -10,7 +10,9 @@ import {
   Space,
   message,
   Typography,
+  Spin,
 } from 'antd';
+import { userApiService } from '../../services/userApiService';
 
 const { Title } = Typography;
 
@@ -24,6 +26,7 @@ const STATUS_OPTIONS = [
   { label: 'Đang hoạt động', value: 'ACTIVE' },
   { label: 'Ngừng hoạt động', value: 'INACTIVE' },
   { label: 'Bị khoá', value: 'LOCKED' },
+  { label: 'Chờ xác minh', value: 'PENDING_VERIFICATION' },
 ];
 
 function renderRoleTag(role) {
@@ -45,8 +48,10 @@ function renderStatusTag(status) {
       return <Tag>Ngừng hoạt động</Tag>;
     case 'LOCKED':
       return <Tag color="red">Bị khoá</Tag>;
+    case 'PENDING_VERIFICATION':
+      return <Tag color="orange">Chờ xác minh</Tag>;
     default:
-      return null;
+      return <Tag>{status}</Tag>;
   }
 }
 
@@ -59,55 +64,68 @@ function formatDate(dateString) {
   return `${day}/${month}/${year}`;
 }
 
-const initialUsers = [
-  {
-    userId: 1,
-    fullName: 'Nguyễn Văn A',
-    email: 'a.nguyen@example.com',
-    phone: '0912345678',
-    role: 'ADMIN',
-    accountStatus: 'ACTIVE',
-    createdAt: '2024-01-01T00:00:00Z',
-    lastLogin: '2024-12-01T10:00:00Z',
-  },
-  {
-    userId: 2,
-    fullName: 'Trần Thị B',
-    email: 'b.tran@example.com',
-    phone: '0987654321',
-    role: 'CLUB_LEADER',
-    accountStatus: 'ACTIVE',
-    createdAt: '2024-02-10T00:00:00Z',
-    lastLogin: '2024-11-28T20:30:00Z',
-  },
-  {
-    userId: 3,
-    fullName: 'Lê Văn C',
-    email: 'c.le@example.com',
-    phone: '0909090909',
-    role: 'STUDENT',
-    accountStatus: 'LOCKED',
-    createdAt: '2024-03-15T00:00:00Z',
-    lastLogin: '2024-05-01T09:15:00Z',
-  },
-  {
-    userId: 4,
-    fullName: 'Phạm Thị D',
-    email: 'd.pham@example.com',
-    phone: '0933445566',
-    role: 'STUDENT',
-    accountStatus: 'INACTIVE',
-    createdAt: '2024-04-20T00:00:00Z',
-    lastLogin: null,
-  },
-];
+// Map API response to component format
+function mapUserFromApi(apiUser) {
+  // Map Role: "Student" -> "STUDENT", "Admin" -> "ADMIN", "ClubLeader" -> "CLUB_LEADER"
+  const roleMap = {
+    Student: 'STUDENT',
+    Admin: 'ADMIN',
+    ClubLeader: 'CLUB_LEADER',
+  };
+
+  // Map AccountStatus: "Active" -> "ACTIVE", "PendingVerification" -> "PENDING_VERIFICATION", etc.
+  const statusMap = {
+    Active: 'ACTIVE',
+    Inactive: 'INACTIVE',
+    Locked: 'LOCKED',
+    PendingVerification: 'PENDING_VERIFICATION',
+  };
+
+  return {
+    userId: apiUser.UserId,
+    fullName: apiUser.FullName,
+    email: apiUser.Email,
+    phone: apiUser.Phone,
+    studentCode: apiUser.StudentCode,
+    role: roleMap[apiUser.Role] || apiUser.Role?.toUpperCase() || 'STUDENT',
+    accountStatus: statusMap[apiUser.AccountStatus] || apiUser.AccountStatus?.toUpperCase() || 'ACTIVE',
+    createdAt: apiUser.CreatedAt,
+    lastLogin: apiUser.LastLogin,
+    avatar: apiUser.Avatar,
+  };
+}
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' | 'edit'
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await userApiService.getAllUsers();
+        
+        if (response.Success && response.Data) {
+          const mappedUsers = response.Data.map(mapUserFromApi);
+          setUsers(mappedUsers);
+        } else {
+          message.error(response.Message || 'Không thể tải danh sách người dùng');
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        message.error(error.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -189,22 +207,42 @@ export default function AdminUsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleToggleLock = (user) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.userId === user.userId
-          ? {
-              ...u,
-              accountStatus: u.accountStatus === 'LOCKED' ? 'ACTIVE' : 'LOCKED',
-            }
-          : u
-      )
-    );
-    message.success(
-      user.accountStatus === 'LOCKED'
-        ? 'Đã mở khoá tài khoản.'
-        : 'Đã khoá tài khoản.'
-    );
+  const handleToggleLock = async (user) => {
+    try {
+      const newStatus = user.accountStatus === 'LOCKED' ? 'ACTIVE' : 'LOCKED';
+      
+      // Map component status to API format
+      const statusMapToApi = {
+        ACTIVE: 'Active',
+        INACTIVE: 'Inactive',
+        LOCKED: 'Locked',
+        PENDING_VERIFICATION: 'PendingVerification',
+      };
+
+      await userApiService.updateUserStatus(user.userId, {
+        AccountStatus: statusMapToApi[newStatus] || newStatus,
+      });
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.userId === user.userId
+            ? {
+                ...u,
+                accountStatus: newStatus,
+              }
+            : u
+        )
+      );
+      
+      message.success(
+        user.accountStatus === 'LOCKED'
+          ? 'Đã mở khoá tài khoản.'
+          : 'Đã khoá tài khoản.'
+      );
+    } catch (error) {
+      console.error('Error toggling lock:', error);
+      message.error(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái tài khoản');
+    }
   };
 
   const handleSubmit = () => {
@@ -255,12 +293,14 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      <Table
-        rowKey="userId"
-        columns={columns}
-        dataSource={users}
-        pagination={{ pageSize: 5 }}
-      />
+      <Spin spinning={loading}>
+        <Table
+          rowKey="userId"
+          columns={columns}
+          dataSource={users}
+          pagination={{ pageSize: 10 }}
+        />
+      </Spin>
 
       <Modal
         title={modalMode === 'create' ? 'Thêm User mới' : 'Chỉnh sửa User'}

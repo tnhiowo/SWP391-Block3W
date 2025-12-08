@@ -30,10 +30,23 @@ const LoginPage = ({ role }) => {
 
       success("Đăng nhập thành công!");
 
-      const userRole = res.data.role;
-      if (userRole === "Admin") {
+      const userRoleRaw =
+        res?.role ||
+        res?.Role ||
+        res?.data?.role ||
+        res?.data?.Role ||
+        res?.roles?.[0] ||
+        res?.data?.roles?.[0] ||
+        res?.Data?.role ||
+        res?.Data?.Role ||
+        res?.Data?.roles?.[0];
+
+      const userRole = (userRoleRaw || "").toString().toLowerCase();
+      console.log("Login response role:", { userRoleRaw, userRole, res });
+
+      if (userRole === "admin") {
         navigate("/admin");
-      } else if (userRole === "Student") {
+      } else if (userRole === "student") {
         navigate("/student");
       } else {
         navigate("/club-leader");

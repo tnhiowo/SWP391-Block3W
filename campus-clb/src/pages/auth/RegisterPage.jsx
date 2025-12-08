@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import authService from '../../api/auth';
+import { authApiService } from '../../services/authApiService';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
@@ -100,11 +100,11 @@ const RegisterPage = () => {
       };
 
       try {
-        const response = await authService.register(submitData);
+        const response = await authApiService.register(submitData);
         
-        if (response.data.Success) {
+        if (response.Success) {
           setSubmitSuccess(true);
-          console.log('Đăng ký thành công:', response.data.Data);
+          console.log('Đăng ký thành công:', response.Data);
           
           // Reset form
           setFormData({
@@ -118,12 +118,12 @@ const RegisterPage = () => {
           });
           
           // TODO: Redirect tới trang xác nhận OTP
-          // const { UserId, Message, ExpiresAt } = response.data.Data;
+          // const { UserId, Message, ExpiresAt } = response.Data;
           // navigate('/verify-otp', { state: { email: formData.email, userId: UserId } });
         }
       } catch (error) {
         console.error('Register error:', error);
-        const errorMessage = error.response?.data?.Message || 'Đăng ký thất bại. Vui lòng thử lại!';
+        const errorMessage = error.message || error.Message || 'Đăng ký thất bại. Vui lòng thử lại!';
         setErrors({ submit: errorMessage });
       } finally {
         setLoading(false);
