@@ -1,0 +1,42 @@
+.student-layout {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #062312, #0c361b, #041a0f);
+}
+
+.student-header {
+    background: rgba(6, 31, 14, 0.8);
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    backdrop-filter: blur(6px);
+}
+
+.student-title-text {
+    font-size: 18px;
+    color: #e5e7eb;
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+.student-content-inner {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.student-sidebar {
+    background: #041a0f;
+}
+
+.student-sidebar-header {
+    height: 64px;
+    padding-left: 20px;
+    display: flex;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+}
+
+.ant-menu-item-selected {
+    background: rgba(34, 197, 94, 0.3) !important;
+}
