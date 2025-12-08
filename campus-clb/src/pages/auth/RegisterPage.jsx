@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import authService from '../../api/auth';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    studentCode: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     role: 'Student',
@@ -17,6 +18,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -39,6 +41,11 @@ const RegisterPage = () => {
     return emailRegex.test(email);
   };
 
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -52,8 +59,10 @@ const RegisterPage = () => {
       newErrors.email = 'Email không hợp lệ';
     }
 
-    if (!formData.studentCode.trim()) {
-      newErrors.studentCode = 'Vui lòng nhập mã sinh viên';
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Vui lòng nhập số điện thoại';
+    } else if (!validatePhone(formData.phone)) {
+      newErrors.phone = 'Số điện thoại phải có 10 chữ số';
     }
 
     if (!formData.password) {
@@ -76,22 +85,49 @@ const RegisterPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitSuccess(false);
 
     if (validateForm()) {
+      setLoading(true);
       const submitData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        studentCode: formData.studentCode,
-        role: formData.role,
-        password: formData.password,
+        FullName: formData.fullName,
+        Email: formData.email,
+        Phone: formData.phone,
+        Password: formData.password,
+        Role: formData.role,
       };
 
-      console.log('Register data:', submitData);
-      // TODO: call register API
-      setSubmitSuccess(true);
+      try {
+        const response = await authService.register(submitData);
+        
+        if (response.data.Success) {
+          setSubmitSuccess(true);
+          console.log('Đăng ký thành công:', response.data.Data);
+          
+          // Reset form
+          setFormData({
+            fullName: '',
+            email: '',
+            phone: '',
+            password: '',
+            confirmPassword: '',
+            role: 'Student',
+            agreeToTerms: false,
+          });
+          
+          // TODO: Redirect tới trang xác nhận OTP
+          // const { UserId, Message, ExpiresAt } = response.data.Data;
+          // navigate('/verify-otp', { state: { email: formData.email, userId: UserId } });
+        }
+      } catch (error) {
+        console.error('Register error:', error);
+        const errorMessage = error.response?.data?.Message || 'Đăng ký thất bại. Vui lòng thử lại!';
+        setErrors({ submit: errorMessage });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -110,7 +146,13 @@ const RegisterPage = () => {
 
             {submitSuccess && (
               <div className="success-message">
-                Đăng ký demo thành công (chưa gọi API)
+                ✓ Đăng ký thành công! Vui lòng kiểm tra email để xác nhận OTP.
+              </div>
+            )}
+
+            {errors.submit && (
+              <div className="error-message" style={{ marginBottom: '20px' }}>
+                ✗ {errors.submit}
               </div>
             )}
 
@@ -152,20 +194,20 @@ const RegisterPage = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="studentCode" className="form-label">
-                  Mã sinh viên
+                <label htmlFor="phone" className="form-label">
+                  Số điện thoại
                 </label>
                 <input
-                  type="text"
-                  id="studentCode"
-                  name="studentCode"
-                  value={formData.studentCode}
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleChange}
-                  className={`form-input ${errors.studentCode ? 'error' : ''}`}
-                  placeholder="Nhập mã sinh viên"
+                  className={`form-input ${errors.phone ? 'error' : ''}`}
+                  placeholder="Nhập số điện thoại (10 chữ số)"
                 />
-                {errors.studentCode && (
-                  <span className="error-message">{errors.studentCode}</span>
+                {errors.phone && (
+                  <span className="error-message">{errors.phone}</span>
                 )}
               </div>
 
@@ -223,7 +265,6 @@ const RegisterPage = () => {
                 )}
               </div>
 
-
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -242,8 +283,12 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              <button type="submit" className="register-button">
-                Đăng ký
+              <button 
+                type="submit" 
+                className="register-button"
+                disabled={loading}
+              >
+                {loading ? 'Đang xử lý...' : 'Đăng ký'}
               </button>
 
               <div className="register-footer">
@@ -273,4 +318,3 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
-
