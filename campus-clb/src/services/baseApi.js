@@ -10,8 +10,25 @@ export const apiCall = async (endpoint,options = {}) => {
     if (token) {
         headers["Authorization"] = `Bearer ${token}`;
     }
+    
+    // Handle query parameters
+    let url = `${API_BASE_URL}${endpoint}`;
+    if (options.params && Object.keys(options.params).length > 0) {
+        const queryString = new URLSearchParams(
+            Object.entries(options.params).reduce((acc, [key, value]) => {
+                if (value !== null && value !== undefined && value !== '') {
+                    acc[key] = value;
+                }
+                return acc;
+            }, {})
+        ).toString();
+        if (queryString) {
+            url += `?${queryString}`;
+        }
+    }
+    
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`,{
+        const response = await fetch(url,{
             ...options,
             headers,
         });
