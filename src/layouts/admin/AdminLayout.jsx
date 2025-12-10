@@ -1,19 +1,36 @@
 import React, { useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Typography, Button, Space, Tag, Avatar } from 'antd';
+import {
+  Layout,
+  Typography,
+  Button,
+  Space,
+  Avatar,
+  theme,
+} from 'antd';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import AdminSidebar from './AdminSidebar';
 import { adminChildRoutes } from '../../routes/adminRoutes';
-import './AdminLayout.css';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Header, Content } = Layout;
-const { Text } = Typography;
+const { Title, Text } = Typography;
+
+const getFullPath = (route) =>
+  route.path && !route.isIndex ? `/admin/${route.path}` : '/admin';
+
+const getInitials = (fullName) => {
+  if (!fullName) return 'A';
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() || 'A';
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+};
 
 export default function AdminLayout() {
+  const { token } = theme.useToken();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const getFullPath = (route) =>
-    route.path && !route.isIndex ? `/admin/${route.path}` : '/admin';
+  const { user, logout } = useAuth();
 
   const activeRoute = useMemo(
     () =>
@@ -27,48 +44,83 @@ export default function AdminLayout() {
     [location.pathname]
   );
 
-  const handleLogout = () => {
-    // eslint-disable-next-line no-alert
-    alert('Đăng xuất (mock)');
-  };
-
-  const handleProfile = () => navigate('/admin/profile');
-  const fullName = 'Admin Demo';
+  const fullName = user?.fullName || user?.username || 'Admin';
 
   return (
-    <Layout className="admin-layout">
+    <Layout
+      style={{
+        minHeight: '100vh',
+        background: token.colorBgLayout,
+      }}
+    >
       <AdminSidebar />
-      <Layout>
-        <Header className="admin-header">
-          <div className="admin-header-left">
-            <div className="admin-page-title">
-              <Tag color="cyan" className="admin-title-tag">
-                Admin
-              </Tag>
-              <Text className="admin-title-text">
+      <Layout style={{ background: token.colorBgLayout }}>
+        <Header
+          style={{
+            background: token.colorBgContainer,
+            borderBottom: `1px solid ${token.colorSplit}`,
+            padding: '12px 24px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <Text type="secondary" style={{ textTransform: 'uppercase', fontSize: 12 }}>
+                CampusCLB Admin Board
+              </Text>
+              <Title level={4} style={{ margin: '4px 0 0' }}>
                 {activeRoute?.label || 'Tổng quan'}
-              </Text>
+              </Title>
             </div>
-          </div>
-          <div className="admin-header-right">
-            <Space size="small">
-              <Avatar size="small" style={{ background: '#7f56da' }}>
-                {fullName.charAt(0)}
+
+            <Space size={12} align="center">
+              <Avatar
+                src={user?.avatar}
+                icon={!user?.avatar ? <UserOutlined /> : null}
+                style={{
+                  background: token.colorPrimary,
+                  color: '#fff',
+                }}
+              >
+                {!user?.avatar ? getInitials(fullName) : null}
               </Avatar>
-              <Text style={{ color: '#e5e7eb', marginRight: 4 }}>
-                Xin chào, {fullName}
-              </Text>
-              <Button size="small" ghost onClick={handleProfile} className="ghost-btn">
-                Hồ sơ
-              </Button>
-              <Button size="small" onClick={handleLogout} className="light-btn">
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                <Text strong>{fullName}</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Admin
+                </Text>
+              </div>
+              <Button
+                type="primary"
+                danger
+                icon={<LogoutOutlined />}
+                onClick={logout}
+              >
                 Đăng xuất
               </Button>
             </Space>
           </div>
         </Header>
-        <Content className="admin-content">
-          <div className="admin-content-inner">
+
+        <Content
+          style={{
+            background: token.colorBgLayout,
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1300,
+              margin: '0 auto',
+              padding: 24,
+            }}
+          >
             <Outlet />
           </div>
         </Content>
