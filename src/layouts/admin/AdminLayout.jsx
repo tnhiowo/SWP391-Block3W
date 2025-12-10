@@ -48,6 +48,12 @@ export default function AdminLayout() {
   const fullName = user?.fullName || user?.username || 'Admin';
   const role = (user?.roles?.[0] || user?.role || '').toUpperCase();
   const roleLabel =
+    role === 'ADMIN'
+      ? 'Quản trị viên'
+      : role === 'CLUB_LEADER'
+        ? 'Chủ nhiệm CLB'
+        : 'Sinh viên';
+  const roleColor =
     role === 'ADMIN' ? 'error' : role === 'CLUB_LEADER' ? 'processing' : 'default';
 
   const menuItems = [
