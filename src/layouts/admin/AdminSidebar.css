@@ -1,22 +1,13 @@
 .admin-sidebar {
-  background: #0a1626;
-  min-height: 100vh;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.admin-sidebar .ant-menu {
-  background: transparent;
-  padding: 12px 0;
-}
-
-.admin-sidebar .ant-menu-item-selected {
-  background: linear-gradient(135deg, #1b2c47 0%, #0f2038 100%) !important;
-  border-radius: 10px;
-}
-
-.admin-sidebar .ant-menu-item {
-  margin: 4px 12px;
-  border-radius: 10px;
+  background: #FFFFFF;
+  border-right: 1px solid #E4E7EB;
+  box-shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.04);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .admin-sidebar-header {
@@ -24,11 +15,80 @@
   padding: 0 20px;
   display: flex;
   align-items: center;
-  color: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  border-bottom: 1px solid #E4E7EB;
+  background: #FFFFFF;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
 
+.admin-sidebar-logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1D2939;
+  letter-spacing: -0.02em;
+}
+
+.admin-sidebar-logo-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7F56D9;
+  background: #F4EBFF;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-sidebar-menu {
+  padding: 12px;
+  background: transparent;
+  border: none;
+}
+
+.admin-sidebar-menu .ant-menu-item {
+  height: 44px;
+  line-height: 44px;
+  margin: 4px 0;
+  padding: 0 12px !important;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #667085;
+  transition: all 0.2s;
+}
+
+.admin-sidebar-menu .ant-menu-item:hover {
+  background: #F9FAFB;
+  color: #7F56D9;
+}
+
+.admin-sidebar-menu .ant-menu-item-selected {
+  background: #F4EBFF;
+  color: #7F56D9;
+  font-weight: 600;
+}
+
+.admin-sidebar-menu .ant-menu-item-selected::after {
+  display: none;
+}
+
+.admin-sidebar-menu .ant-menu-item-icon {
+  font-size: 18px;
+  margin-right: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .admin-sidebar {
+    position: fixed;
+    z-index: 1000;
+    height: 100vh;
+  }
+}

@@ -6,7 +6,6 @@ import {
   UserOutlined,
   TeamOutlined,
   AuditOutlined,
-  SettingOutlined,
 } from '@ant-design/icons';
 import { adminChildRoutes } from '../../routes/adminRoutes';
 import './AdminSidebar.css';
@@ -18,7 +17,7 @@ const iconMap = {
   users: <UserOutlined />,
   clubs: <TeamOutlined />,
   invoices: <AuditOutlined />,
-  profile: <SettingOutlined />,
+  profile: null,
 };
 
 const getFullPath = (route) =>
@@ -37,30 +36,39 @@ export default function AdminSidebar() {
       );
     }) || adminChildRoutes[0];
 
-  const sidebarItems = adminChildRoutes.filter(
-    (route) => route.showInSidebar !== false
-  );
+  const sidebarItems = adminChildRoutes
+    .filter((route) => route.showInSidebar !== false)
+    .map((item) => {
+      const fullPath = getFullPath(item);
+      return {
+        key: item.key,
+        icon: iconMap[item.iconKey] || null,
+        label: item.label,
+        onClick: () => navigate(fullPath),
+      };
+    });
 
   return (
-    <Sider className="admin-sidebar" width={250} breakpoint="lg" collapsedWidth={72}>
+    <Sider
+      className="admin-sidebar"
+      width={260}
+      breakpoint="lg"
+      collapsedWidth={80}
+      theme="light"
+    >
       <div className="admin-sidebar-header">
-        <span className="admin-sidebar-logo">Campus Club Admin 🔔</span>
+        <div className="admin-sidebar-logo">
+          <span className="admin-sidebar-logo-text">Campus Club</span>
+          <span className="admin-sidebar-logo-badge">Admin</span>
+        </div>
       </div>
       <Menu
-        theme="dark"
+        theme="light"
         mode="inline"
         selectedKeys={[activeRoute?.key || 'dashboard']}
-        items={sidebarItems.map((item) => {
-          const fullPath = getFullPath(item);
-          return {
-            key: item.key,
-            icon: iconMap[item.iconKey] || null,
-            label: item.label,
-            onClick: () => navigate(fullPath),
-          };
-        })}
+        items={sidebarItems}
+        className="admin-sidebar-menu"
       />
     </Sider>
   );
 }
-

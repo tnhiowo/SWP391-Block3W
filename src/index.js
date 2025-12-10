@@ -5,11 +5,12 @@ import 'antd/dist/reset.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { themeConfig } from './theme';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <ConfigProvider>
+    <ConfigProvider theme={themeConfig}>
       <App />
     </ConfigProvider>
   </React.StrictMode>
