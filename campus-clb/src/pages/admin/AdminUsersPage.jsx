@@ -16,11 +16,12 @@ import {
   Col,
   Avatar,
   Tooltip,
+  theme,
 } from 'antd';
 import { SearchOutlined, ReloadOutlined, UserOutlined, MailOutlined, PhoneOutlined, IdcardOutlined, SafetyOutlined, CalendarOutlined, LoginOutlined } from '@ant-design/icons';
 import { userApiService } from '../../services/userApiService';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const ROLE_OPTIONS = [
   { label: 'Admin', value: 'ADMIN' },
@@ -551,24 +552,29 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Quản lý Users
-        </Title>
-        <Button type="primary" onClick={openCreateModal}>
+    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <Title level={3} style={{ margin: 0, marginBottom: 4 }}>
+            Quản lý Users
+          </Title>
+          <Text type="secondary" style={{ fontSize: 14 }}>
+            Quản lý và theo dõi tất cả người dùng trong hệ thống
+          </Text>
+        </div>
+        <Button type="primary" size="large" onClick={openCreateModal}>
           Thêm User
         </Button>
       </div>
 
       {/* Filter Section */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card
+        bordered={false}
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        }}
+      >
         <Form
           form={filterForm}
           layout="vertical"
@@ -619,23 +625,32 @@ export default function AdminUsersPage() {
         </Form>
       </Card>
 
-      <Spin spinning={loading}>
-        <Table
-          rowKey="userId"
-          columns={columns}
-          dataSource={users}
-          pagination={{
-            current: filters.pageNumber,
-            pageSize: filters.pageSize,
-            total: totalCount,
-            showSizeChanger: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} của ${total} người dùng`,
-            pageSizeOptions: ['10', '20', '50', '100'],
-          }}
-          onChange={handleTableChange}
-        />
-      </Spin>
+      <Card
+        bordered={false}
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        }}
+      >
+        <Spin spinning={loading}>
+          <Table
+            rowKey="userId"
+            columns={columns}
+            dataSource={users}
+            pagination={{
+              current: filters.pageNumber,
+              pageSize: filters.pageSize,
+              total: totalCount,
+              showSizeChanger: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} của ${total} người dùng`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={handleTableChange}
+            style={{ borderRadius: 8 }}
+          />
+        </Spin>
+      </Card>
 
       <Modal
         title={modalMode === 'create' ? 'Thêm User mới' : 'Chỉnh sửa User'}
@@ -964,7 +979,7 @@ export default function AdminUsersPage() {
           )}
         </Spin>
       </Modal>
-    </div>
+    </Space>
   );
 }
 
