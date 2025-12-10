@@ -3,10 +3,11 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Layout,
   Typography,
-  Button,
   Space,
   Avatar,
   theme,
+  Dropdown,
+  Tag,
 } from 'antd';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import AdminSidebar from './AdminSidebar';
@@ -45,42 +46,76 @@ export default function AdminLayout() {
   );
 
   const fullName = user?.fullName || user?.username || 'Admin';
+  const role = (user?.roles?.[0] || user?.role || '').toUpperCase();
+  const roleLabel =
+    role === 'ADMIN' ? 'error' : role === 'CLUB_LEADER' ? 'processing' : 'default';
+
+  const menuItems = [
+    {
+      key: 'profile',
+      label: 'Thông tin cá nhân',
+      onClick: () => navigate('/admin/profile'),
+    },
+    { type: 'divider' },
+    {
+      key: 'logout',
+      label: 'Đăng xuất',
+      icon: <LogoutOutlined />,
+      onClick: logout,
+    },
+  ];
 
   return (
     <Layout
       style={{
         minHeight: '100vh',
         background: token.colorBgLayout,
+        overflow: 'hidden',
       }}
     >
       <AdminSidebar />
-      <Layout style={{ background: token.colorBgLayout }}>
+      <Layout
+        style={{
+          background: token.colorBgLayout,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          overflow: 'hidden',
+        }}
+      >
         <Header
           style={{
             background: token.colorBgContainer,
             borderBottom: `1px solid ${token.colorSplit}`,
-            padding: '12px 24px',
+            padding: '12px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 16,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <Text type="secondary" style={{ textTransform: 'uppercase', fontSize: 12 }}>
-                CampusCLB Admin Board
-              </Text>
-              <Title level={4} style={{ margin: '4px 0 0' }}>
-                {activeRoute?.label || 'Tổng quan'}
-              </Title>
-            </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Text type="secondary" style={{ textTransform: 'uppercase', fontSize: 12, display: 'block' }}>
+              CampusCLB Admin Board
+            </Text>
+            <Title level={4} style={{ margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {activeRoute?.label || 'Tổng quan'}
+            </Title>
+          </div>
 
-            <Space size={12} align="center">
+          <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
+            <Space
+              align="center"
+              size={10}
+              style={{
+                padding: '6px 10px',
+                borderRadius: 12,
+                background: token.colorBgLayout,
+                border: `1px solid ${token.colorSplit}`,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
               <Avatar
                 src={user?.avatar}
                 icon={!user?.avatar ? <UserOutlined /> : null}
@@ -91,27 +126,23 @@ export default function AdminLayout() {
               >
                 {!user?.avatar ? getInitials(fullName) : null}
               </Avatar>
-              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-                <Text strong>{fullName}</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Admin
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, lineHeight: 1.2 }}>
+                <Text strong style={{ margin: 0, whiteSpace: 'nowrap' }}>
+                  {fullName}
                 </Text>
+                <Tag color={roleColor} style={{ margin: 0 }}>
+                  {roleLabel}
+                </Tag>
               </div>
-              <Button
-                type="primary"
-                danger
-                icon={<LogoutOutlined />}
-                onClick={logout}
-              >
-                Đăng xuất
-              </Button>
             </Space>
-          </div>
+          </Dropdown>
         </Header>
 
         <Content
           style={{
             background: token.colorBgLayout,
+            flex: 1,
+            overflowY: 'auto',
           }}
         >
           <div

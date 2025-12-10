@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Row, Col, Card, Typography, Space, Statistic, theme } from "antd";
 import {
   UserOutlined,
@@ -6,43 +6,89 @@ import {
   AuditOutlined,
   DollarOutlined,
 } from "@ant-design/icons";
+import { userApiService } from "../../services/userApiService";
+import { clubApiService } from "../../services/clubApiService";
 
 const { Title, Text } = Typography;
 
-const stats = [
-  {
-    key: "users",
-    label: "Tổng số Users",
-    value: 128,
-    icon: <UserOutlined />,
-    color: "#7f56da",
-  },
-  {
-    key: "clubs",
-    label: "Tổng số CLB",
-    value: 12,
-    icon: <TeamOutlined />,
-    color: "#22c55e",
-  },
-  {
-    key: "pending",
-    label: "Yêu cầu chờ duyệt",
-    value: 7,
-    icon: <AuditOutlined />,
-    color: "#f59e0b",
-  },
-  {
-    key: "revenue",
-    label: "Doanh thu phí (mock)",
-    value: 15000000,
-    formatter: (v) => v.toLocaleString("vi-VN") + " VNĐ",
-    icon: <DollarOutlined />,
-    color: "#0ea5e9",
-  },
-];
-
 export default function AdminDashboardPage() {
   const { token } = theme.useToken();
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalClubs, setTotalClubs] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      try {
+        const [usersResponse, clubsResponse] = await Promise.all([
+          userApiService.getAllUsers({ PageNumber: 1, PageSize: 1 }),
+          clubApiService.getAllClubs({ PageNumber: 1, PageSize: 1 }),
+        ]);
+
+        const usersOk = usersResponse?.Success ?? usersResponse?.success ?? true;
+        if (usersOk) {
+          setTotalUsers(
+            usersResponse?.TotalCount ??
+              usersResponse?.totalCount ??
+              usersResponse?.total ??
+              0
+          );
+        }
+
+        const clubsOk = clubsResponse?.Success ?? clubsResponse?.success ?? true;
+        if (clubsOk) {
+          setTotalClubs(
+            clubsResponse?.TotalCount ??
+              clubsResponse?.totalCount ??
+              clubsResponse?.total ??
+              0
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard stats", error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const stats = useMemo(
+    () => [
+      {
+        key: "users",
+        label: "Tổng số Users",
+        value: loadingStats ? "-" : totalUsers,
+        icon: <UserOutlined />,
+        color: "#7f56da",
+      },
+      {
+        key: "clubs",
+        label: "Tổng số CLB",
+        value: loadingStats ? "-" : totalClubs,
+        icon: <TeamOutlined />,
+        color: "#22c55e",
+      },
+      {
+        key: "pending",
+        label: "Yêu cầu chờ duyệt",
+        value: 7,
+        icon: <AuditOutlined />,
+        color: "#f59e0b",
+      },
+      {
+        key: "revenue",
+        label: "Doanh thu phí (mock)",
+        value: 15000000,
+        formatter: (v) => v.toLocaleString("vi-VN") + " VNĐ",
+        icon: <DollarOutlined />,
+        color: "#0ea5e9",
+      },
+    ],
+    [loadingStats, totalUsers, totalClubs]
+  );
 
   return (
     <div
