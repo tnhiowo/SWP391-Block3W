@@ -1,5 +1,5 @@
-import React from "react";
-import { Row, Col, Card, Typography, Space, Statistic, theme, Table, Tag } from "antd";
+import React, { useEffect, useMemo, useState } from "react";
+import { Row, Col, Card, Typography, Space, Statistic, theme } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -8,124 +8,89 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined,
 } from "@ant-design/icons";
+import { userApiService } from "../../services/userApiService";
+import { clubApiService } from "../../services/clubApiService";
 
 const { Title, Text } = Typography;
 
-const stats = [
-  {
-    key: "users",
-    label: "Tổng số Users",
-    value: 128,
-    change: 12,
-    changeType: "up",
-    icon: <UserOutlined />,
-    color: "#7F56D9",
-  },
-  {
-    key: "clubs",
-    label: "Tổng số CLB",
-    value: 12,
-    change: 3,
-    changeType: "up",
-    icon: <TeamOutlined />,
-    color: "#22C55E",
-  },
-  {
-    key: "pending",
-    label: "Yêu cầu chờ duyệt",
-    value: 7,
-    change: 2,
-    changeType: "down",
-    icon: <AuditOutlined />,
-    color: "#F59E0B",
-  },
-  {
-    key: "revenue",
-    label: "Doanh thu phí",
-    value: 15000000,
-    formatter: (v) => v.toLocaleString("vi-VN") + " VNĐ",
-    change: 15,
-    changeType: "up",
-    icon: <DollarOutlined />,
-    color: "#0EA5E9",
-  },
-];
-
-// Mock recent activities
-const recentActivities = [
-  {
-    key: 1,
-    user: "Nguyễn Văn A",
-    action: "Đã tham gia",
-    club: "Câu lạc bộ Lập trình",
-    time: "2 giờ trước",
-    status: "success",
-  },
-  {
-    key: 2,
-    user: "Trần Thị B",
-    action: "Đã thanh toán phí",
-    club: "Câu lạc bộ Bóng đá",
-    time: "5 giờ trước",
-    status: "success",
-  },
-  {
-    key: 3,
-    user: "Lê Văn C",
-    action: "Yêu cầu tham gia",
-    club: "Câu lạc bộ Văn nghệ",
-    time: "1 ngày trước",
-    status: "warning",
-  },
-  {
-    key: 4,
-    user: "Phạm Thị D",
-    action: "Đã tạo CLB mới",
-    club: "Câu lạc bộ Tình nguyện Xanh",
-    time: "2 ngày trước",
-    status: "info",
-  },
-];
-
-const activityColumns = [
-  {
-    title: "Người dùng",
-    dataIndex: "user",
-    key: "user",
-  },
-  {
-    title: "Hành động",
-    dataIndex: "action",
-    key: "action",
-  },
-  {
-    title: "CLB",
-    dataIndex: "club",
-    key: "club",
-  },
-  {
-    title: "Thời gian",
-    dataIndex: "time",
-    key: "time",
-  },
-  {
-    title: "Trạng thái",
-    dataIndex: "status",
-    key: "status",
-    render: (status) => {
-      const statusMap = {
-        success: { color: "success", text: "Thành công" },
-        warning: { color: "warning", text: "Chờ duyệt" },
-        info: { color: "processing", text: "Mới" },
-      };
-      const s = statusMap[status] || statusMap.info;
-      return <Tag color={s.color}>{s.text}</Tag>;
-    },
-  },
-];
-
 export default function AdminDashboardPage() {
   const { token } = theme.useToken();
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalClubs, setTotalClubs] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      try {
+        const [usersResponse, clubsResponse] = await Promise.all([
+          userApiService.getAllUsers({ PageNumber: 1, PageSize: 1 }),
+          clubApiService.getAllClubs({ PageNumber: 1, PageSize: 1 }),
+        ]);
+
+        const usersOk = usersResponse?.Success ?? usersResponse?.success ?? true;
+        if (usersOk) {
+          setTotalUsers(
+            usersResponse?.TotalCount ??
+              usersResponse?.totalCount ??
+              usersResponse?.total ??
+              0
+          );
+        }
+
+        const clubsOk = clubsResponse?.Success ?? clubsResponse?.success ?? true;
+        if (clubsOk) {
+          setTotalClubs(
+            clubsResponse?.TotalCount ??
+              clubsResponse?.totalCount ??
+              clubsResponse?.total ??
+              0
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard stats", error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const stats = useMemo(
+    () => [
+      {
+        key: "users",
+        label: "Tổng số Users",
+        value: loadingStats ? "-" : totalUsers,
+        icon: <UserOutlined />,
+        color: "#7f56da",
+      },
+      {
+        key: "clubs",
+        label: "Tổng số CLB",
+        value: loadingStats ? "-" : totalClubs,
+        icon: <TeamOutlined />,
+        color: "#22c55e",
+      },
+      {
+        key: "pending",
+        label: "Yêu cầu chờ duyệt",
+        value: 7,
+        icon: <AuditOutlined />,
+        color: "#f59e0b",
+      },
+      {
+        key: "revenue",
+        label: "Doanh thu phí (mock)",
+        value: 15000000,
+        formatter: (v) => v.toLocaleString("vi-VN") + " VNĐ",
+        icon: <DollarOutlined />,
+        color: "#0ea5e9",
+      },
+    ],
+    [loadingStats, totalUsers, totalClubs]
+  );
 
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>

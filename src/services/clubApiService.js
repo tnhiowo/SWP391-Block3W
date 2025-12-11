@@ -15,9 +15,38 @@ export const clubApiService = {
         }),
 
 
-    getAllClubs: (params = {},status = null) => {
-        const queryParams = { ...params };
-        if (status) queryParams.status = status;
+    getAllClubs: (filters = {}, statusOverride = null) => {
+        // Normalize filter keys so callers can pass either camelCase or PascalCase
+        const {
+            PageNumber,
+            pageNumber,
+            PageSize,
+            pageSize,
+            Search,
+            search,
+            SearchKeyword,
+            searchKeyword,
+            SortBy,
+            sortBy,
+            SortOrder,
+            sortOrder,
+            Status,
+            status,
+        } = filters;
+
+        const queryParams = {
+            PageNumber: PageNumber ?? pageNumber,
+            PageSize: PageSize ?? pageSize,
+            Search: Search ?? search ?? SearchKeyword ?? searchKeyword,
+            SortBy: SortBy ?? sortBy,
+            SortOrder: SortOrder ?? sortOrder,
+        };
+
+        const finalStatus = statusOverride ?? Status ?? status;
+        if (finalStatus && finalStatus !== "ALL") {
+            queryParams.status = finalStatus;
+        }
+
         return apiCall("/clubs",{
             method: "GET",
             params: queryParams,

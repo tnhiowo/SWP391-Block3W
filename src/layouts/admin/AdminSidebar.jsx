@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Typography, Space, theme } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -8,9 +8,9 @@ import {
   AuditOutlined,
 } from '@ant-design/icons';
 import { adminChildRoutes } from '../../routes/adminRoutes';
-import './AdminSidebar.css';
 
 const { Sider } = Layout;
+const { Text } = Typography;
 
 const iconMap = {
   dashboard: <DashboardOutlined />,
@@ -24,6 +24,7 @@ const getFullPath = (route) =>
   route.path && !route.isIndex ? `/admin/${route.path}` : '/admin';
 
 export default function AdminSidebar() {
+  const { token } = theme.useToken();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -50,24 +51,73 @@ export default function AdminSidebar() {
 
   return (
     <Sider
-      className="admin-sidebar"
-      width={260}
+      width={248}
       breakpoint="lg"
-      collapsedWidth={80}
+      collapsedWidth={72}
       theme="light"
+      style={{
+        background: token.colorBgContainer,
+        minHeight: '100vh',
+        position: 'sticky',
+        top: 0,
+        overflow: 'auto',
+        borderRight: `1px solid ${token.colorSplit}`,
+      }}
     >
-      <div className="admin-sidebar-header">
-        <div className="admin-sidebar-logo">
-          <span className="admin-sidebar-logo-text">Campus Club</span>
-          <span className="admin-sidebar-logo-badge">Admin</span>
-        </div>
+      <div
+        style={{
+          height: 72,
+          padding: '0 20px',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: `1px solid ${token.colorSplit}`,
+        }}
+      >
+        <Space align="center" size={10}>
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              background: token.colorPrimary,
+              boxShadow: '0 0 0 6px rgba(127, 86, 217, 0.1)',
+              display: 'inline-block',
+            }}
+          />
+          <div style={{ lineHeight: 1.1 }}>
+            <Text strong style={{ color: token.colorText }}>
+              CampusCLB
+            </Text>
+            <br />
+            <Text style={{ color: token.colorTextSecondary, fontSize: 12 }}>
+              Admin Board
+            </Text>
+          </div>
+        </Space>
       </div>
+
       <Menu
         theme="light"
         mode="inline"
         selectedKeys={[activeRoute?.key || 'dashboard']}
-        items={sidebarItems}
-        className="admin-sidebar-menu"
+        items={sidebarItems.map((item) => {
+          const fullPath = getFullPath(item);
+          return {
+            key: item.key,
+            icon: iconMap[item.iconKey] || null,
+            label: item.label,
+            onClick: () => navigate(fullPath),
+            style: {
+              borderRadius: 10,
+              marginInline: 12,
+              marginBlock: 4,
+            },
+          };
+        })}
+        style={{
+          background: 'transparent',
+          color: token.colorText,
+        }}
       />
     </Sider>
   );

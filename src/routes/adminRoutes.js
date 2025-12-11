@@ -5,6 +5,7 @@ import AdminClubsPage from '../pages/admin/AdminClubsPage';
 import AdminInvoicesPage from '../pages/admin/AdminInvoicesPage';
 import AdminProfilePage from '../pages/admin/AdminProfilePage';
 import { Navigate } from 'react-router-dom';
+import AdminGuard from '../components/guards/AdminGuard';
 
 export const adminChildRoutes = [
   {
@@ -49,7 +50,11 @@ export const adminChildRoutes = [
 const adminRoutes = [
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <AdminGuard>
+        <AdminLayout />
+      </AdminGuard>
+    ),
     children: [
       ...adminChildRoutes.map((route) => {
         if (route.isIndex) {

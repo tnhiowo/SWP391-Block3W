@@ -217,6 +217,11 @@ const LoginPage = ({ role }) => {
                     </StyledLink>
                   </div>
 
+                  <div style={{ marginTop: 6, textAlign: "center" }}>
+                    Bạn chưa có tài khoản ?{" "}
+                    <StyledLink to="/register">Đăng ký</StyledLink>
+                  </div>
+
                   <Button
                     htmlType="submit"
                     type="primary"

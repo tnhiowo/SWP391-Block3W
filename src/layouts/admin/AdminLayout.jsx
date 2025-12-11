@@ -1,27 +1,37 @@
 import React, { useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Typography, Button, Space, Avatar, Dropdown, Badge } from 'antd';
 import {
-  BellOutlined,
-  UserOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
+  Layout,
+  Typography,
+  Space,
+  Avatar,
+  theme,
+  Dropdown,
+  Tag,
+} from 'antd';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import AdminSidebar from './AdminSidebar';
 import { adminChildRoutes } from '../../routes/adminRoutes';
 import { useAuth } from '../../contexts/AuthContext';
-import './AdminLayout.css';
 
 const { Header, Content } = Layout;
-const { Text } = Typography;
+const { Title, Text } = Typography;
+
+const getFullPath = (route) =>
+  route.path && !route.isIndex ? `/admin/${route.path}` : '/admin';
+
+const getInitials = (fullName) => {
+  if (!fullName) return 'A';
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() || 'A';
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+};
 
 export default function AdminLayout() {
+  const { token } = theme.useToken();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-
-  const getFullPath = (route) =>
-    route.path && !route.isIndex ? `/admin/${route.path}` : '/admin';
 
   const activeRoute = useMemo(
     () =>
@@ -35,88 +45,119 @@ export default function AdminLayout() {
     [location.pathname]
   );
 
-  const handleLogout = () => {
-    logout();
-  };
+  const fullName = user?.fullName || user?.username || 'Admin';
+  const role = (user?.roles?.[0] || user?.role || '').toUpperCase();
+  const roleLabel =
+    role === 'ADMIN'
+      ? 'Quản trị viên'
+      : role === 'CLUB_LEADER'
+        ? 'Chủ nhiệm CLB'
+        : 'Sinh viên';
+  const roleColor =
+    role === 'ADMIN' ? 'error' : role === 'CLUB_LEADER' ? 'processing' : 'default';
 
-  const handleProfile = () => navigate('/admin/profile');
-
-  const fullName = user?.fullName || 'Admin';
-  const userInitials = fullName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-  const userMenuItems = [
+  const menuItems = [
     {
       key: 'profile',
-      icon: <UserOutlined />,
-      label: 'Hồ sơ',
-      onClick: handleProfile,
+      label: 'Thông tin cá nhân',
+      onClick: () => navigate('/admin/profile'),
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-    },
-    {
-      type: 'divider',
-    },
+    { type: 'divider' },
     {
       key: 'logout',
-      icon: <LogoutOutlined />,
       label: 'Đăng xuất',
-      danger: true,
-      onClick: handleLogout,
+      icon: <LogoutOutlined />,
+      onClick: logout,
     },
   ];
 
   return (
-    <Layout className="admin-layout" hasSider>
+    <Layout
+      style={{
+        minHeight: '100vh',
+        background: token.colorBgLayout,
+        overflow: 'hidden',
+      }}
+    >
       <AdminSidebar />
-      <Layout className="admin-main-layout">
-        <Header className="admin-header">
-          <div className="admin-header-left">
-            <Typography.Title level={4} className="admin-page-title" style={{ margin: 0 }}>
+      <Layout
+        style={{
+          background: token.colorBgLayout,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          overflow: 'hidden',
+        }}
+      >
+        <Header
+          style={{
+            background: token.colorBgContainer,
+            borderBottom: `1px solid ${token.colorSplit}`,
+            padding: '12px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Text type="secondary" style={{ textTransform: 'uppercase', fontSize: 12, display: 'block' }}>
+              CampusCLB Admin Board
+            </Text>
+            <Title level={4} style={{ margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {activeRoute?.label || 'Tổng quan'}
-            </Typography.Title>
+            </Title>
           </div>
-          <div className="admin-header-right">
-            <Space size="middle">
-              <Badge count={0} showZero={false}>
-                <Button
-                  type="text"
-                  icon={<BellOutlined />}
-                  className="admin-header-icon-btn"
-                />
-              </Badge>
-              <Dropdown
-                menu={{ items: userMenuItems }}
-                placement="bottomRight"
-                trigger={['click']}
+
+          <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
+            <Space
+              align="center"
+              size={10}
+              style={{
+                padding: '6px 10px',
+                borderRadius: 12,
+                background: token.colorBgLayout,
+                border: `1px solid ${token.colorSplit}`,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <Avatar
+                src={user?.avatar}
+                icon={!user?.avatar ? <UserOutlined /> : null}
+                style={{
+                  background: token.colorPrimary,
+                  color: '#fff',
+                }}
               >
-                <Space className="admin-user-dropdown" style={{ cursor: 'pointer' }}>
-                  <Avatar
-                    size="default"
-                    style={{
-                      backgroundColor: '#7F56D9',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {userInitials}
-                  </Avatar>
-                  <Text strong style={{ color: '#1D2939' }}>
-                    {fullName}
-                  </Text>
-                </Space>
-              </Dropdown>
+                {!user?.avatar ? getInitials(fullName) : null}
+              </Avatar>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, lineHeight: 1.2 }}>
+                <Text strong style={{ margin: 0, whiteSpace: 'nowrap' }}>
+                  {fullName}
+                </Text>
+                <Tag color={roleColor} style={{ margin: 0 }}>
+                  {roleLabel}
+                </Tag>
+              </div>
             </Space>
-          </div>
+          </Dropdown>
         </Header>
-        <Content className="admin-content">
-          <div className="admin-content-inner">
+
+        <Content
+          style={{
+            background: token.colorBgLayout,
+            flex: 1,
+            overflowY: 'auto',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1300,
+              margin: '0 auto',
+              padding: 24,
+            }}
+          >
             <Outlet />
           </div>
         </Content>
