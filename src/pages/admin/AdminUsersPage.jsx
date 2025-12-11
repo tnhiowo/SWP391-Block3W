@@ -43,6 +43,20 @@ const STATUS_OPTIONS_API = [
   { label: 'Chờ xác minh', value: 'PendingVerification' },
 ];
 
+// Normalize backend envelope fields to a single shape
+const normalizeApiResponse = (response = {}) => ({
+  success: response.Success ?? response.success ?? response.status ?? false,
+  data:
+    response.Data ??
+    response.data ??
+    response.Payload ??
+    response.payload ??
+    null,
+  totalCount:
+    response.TotalCount ?? response.totalCount ?? response.Count ?? 0,
+  message: response.Message ?? response.message ?? '',
+});
+
 // Map component status to API status
 const statusMapToApi = {
   ACTIVE: 'Active',
@@ -139,11 +153,16 @@ function formatDate(dateString) {
 
 // Map API response to component format
 function mapUserFromApi(apiUser) {
+  if (!apiUser) return null;
+
   // Map Role: "Student" -> "STUDENT", "Admin" -> "ADMIN", "ClubLeader" -> "CLUB_LEADER"
   const roleMap = {
     Student: 'STUDENT',
     Admin: 'ADMIN',
     ClubLeader: 'CLUB_LEADER',
+    CLUB_LEADER: 'CLUB_LEADER',
+    ADMIN: 'ADMIN',
+    STUDENT: 'STUDENT',
   };
 
   // Map AccountStatus: "Active" -> "ACTIVE", "Disabled" -> "INACTIVE", etc.
@@ -153,19 +172,46 @@ function mapUserFromApi(apiUser) {
     Inactive: 'INACTIVE', // Support both for backward compatibility
     Locked: 'LOCKED',
     PendingVerification: 'PENDING_VERIFICATION',
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+    LOCKED: 'LOCKED',
+    PENDING_VERIFICATION: 'PENDING_VERIFICATION',
   };
 
+  const roleValue = apiUser.Role ?? apiUser.role ?? apiUser.roleName;
+  const statusValue =
+    apiUser.AccountStatus ?? apiUser.accountStatus ?? apiUser.status;
+
   return {
-    userId: apiUser.UserId,
-    fullName: apiUser.FullName,
-    email: apiUser.Email,
-    phone: apiUser.Phone,
-    studentCode: apiUser.StudentCode,
-    role: roleMap[apiUser.Role] || apiUser.Role?.toUpperCase() || 'STUDENT',
-    accountStatus: statusMap[apiUser.AccountStatus] || apiUser.AccountStatus?.toUpperCase() || 'ACTIVE',
-    createdAt: apiUser.CreatedAt,
-    lastLogin: apiUser.LastLogin,
-    avatar: apiUser.Avatar,
+    userId: apiUser.UserId ?? apiUser.userId ?? apiUser.id,
+    fullName: apiUser.FullName ?? apiUser.fullName ?? apiUser.name,
+    email: apiUser.Email ?? apiUser.email,
+    phone: apiUser.Phone ?? apiUser.phone,
+    studentCode: apiUser.StudentCode ?? apiUser.studentCode,
+    role: roleMap[roleValue] || roleValue?.toUpperCase() || 'STUDENT',
+    accountStatus:
+      statusMap[statusValue] || statusValue?.toUpperCase() || 'ACTIVE',
+    createdAt: apiUser.CreatedAt ?? apiUser.createdAt,
+    lastLogin: apiUser.LastLogin ?? apiUser.lastLogin,
+    avatar: apiUser.Avatar ?? apiUser.avatar,
+  };
+}
+
+// Normalize detail payload to keep existing UI bindings working
+function normalizeUserDetail(apiUser) {
+  if (!apiUser) return null;
+  return {
+    ...apiUser,
+    UserId: apiUser.UserId ?? apiUser.userId ?? apiUser.id,
+    FullName: apiUser.FullName ?? apiUser.fullName ?? apiUser.name,
+    Email: apiUser.Email ?? apiUser.email,
+    Phone: apiUser.Phone ?? apiUser.phone,
+    StudentCode: apiUser.StudentCode ?? apiUser.studentCode,
+    Role: apiUser.Role ?? apiUser.role ?? apiUser.roleName,
+    AccountStatus: apiUser.AccountStatus ?? apiUser.accountStatus ?? apiUser.status,
+    Avatar: apiUser.Avatar ?? apiUser.avatar,
+    CreatedAt: apiUser.CreatedAt ?? apiUser.createdAt,
+    LastLogin: apiUser.LastLogin ?? apiUser.lastLogin,
   };
 }
 
@@ -207,13 +253,17 @@ export default function AdminUsersPage() {
         };
 
         const response = await userApiService.getAllUsers(params);
-        
-        if (response.Success && response.Data) {
-          const mappedUsers = response.Data.map(mapUserFromApi);
+        const { success, data, totalCount, message: apiMessage } =
+          normalizeApiResponse(response);
+
+        if (success && Array.isArray(data)) {
+          const mappedUsers = data
+            .map(mapUserFromApi)
+            .filter((user) => user && user.userId);
           setUsers(mappedUsers);
-          setTotalCount(response.TotalCount || 0);
+          setTotalCount(totalCount || data.length || 0);
         } else {
-          message.error(response.Message || 'Không thể tải danh sách người dùng');
+          message.error(apiMessage || 'Không thể tải danh sách người dùng');
         }
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -379,11 +429,12 @@ export default function AdminUsersPage() {
       setUserDetail(null);
 
       const response = await userApiService.getUserById(user.userId);
-      
-      if (response.Success && response.Data) {
-        setUserDetail(response.Data);
+      const { success, data, message: apiMessage } = normalizeApiResponse(response);
+
+      if (success && data) {
+        setUserDetail(normalizeUserDetail(data));
       } else {
-        message.error(response.Message || 'Không thể tải thông tin chi tiết');
+        message.error(apiMessage || 'Không thể tải thông tin chi tiết');
         setIsDetailModalOpen(false);
       }
     } catch (error) {
@@ -415,9 +466,14 @@ export default function AdminUsersPage() {
       };
 
       const response = await userApiService.getAllUsers(params);
-      if (response.Success && response.Data) {
-        const mappedUsers = response.Data.map(mapUserFromApi);
-        const newTotalCount = response.TotalCount || 0;
+      const { success, data, totalCount, message: apiMessage } =
+        normalizeApiResponse(response);
+
+      if (success && Array.isArray(data)) {
+        const mappedUsers = data
+          .map(mapUserFromApi)
+          .filter((user) => user && user.userId);
+        const newTotalCount = totalCount || data.length || 0;
         
         // Calculate max page based on new total count
         const maxPage = Math.ceil(newTotalCount / currentPageSize);
@@ -441,6 +497,8 @@ export default function AdminUsersPage() {
           }));
         }
         // If page number stays the same, don't update filters to avoid triggering useEffect
+      } else if (apiMessage) {
+        message.error(apiMessage);
       }
 
       const statusLabels = {
@@ -479,9 +537,10 @@ export default function AdminUsersPage() {
         };
 
         const response = await userApiService.createUser(requestData);
-        
-        if (response.Success) {
-          message.success(response.Message || 'Thêm User thành công');
+        const { success, message: apiMessage } = normalizeApiResponse(response);
+
+        if (success) {
+          message.success(apiMessage || 'Thêm User thành công');
           setIsModalOpen(false);
           form.resetFields();
           
@@ -495,13 +554,18 @@ export default function AdminUsersPage() {
           };
 
           const refreshResponse = await userApiService.getAllUsers(params);
-          if (refreshResponse.Success && refreshResponse.Data) {
-            const mappedUsers = refreshResponse.Data.map(mapUserFromApi);
+          const { success: refreshSuccess, data, totalCount } =
+            normalizeApiResponse(refreshResponse);
+
+          if (refreshSuccess && Array.isArray(data)) {
+            const mappedUsers = data
+              .map(mapUserFromApi)
+              .filter((user) => user && user.userId);
             setUsers(mappedUsers);
-            setTotalCount(refreshResponse.TotalCount || 0);
+            setTotalCount(totalCount || data.length || 0);
           }
         } else {
-          message.error(response.Message || 'Không thể tạo user');
+          message.error(apiMessage || 'Không thể tạo user');
         }
       } else if (editingUser) {
         // Map form values to API format
@@ -514,9 +578,10 @@ export default function AdminUsersPage() {
         };
 
         const response = await userApiService.updateUser(editingUser.userId, requestData);
-        
-        if (response.Success) {
-          message.success(response.Message || 'Cập nhật User thành công');
+        const { success, message: apiMessage } = normalizeApiResponse(response);
+
+        if (success) {
+          message.success(apiMessage || 'Cập nhật User thành công');
           setIsModalOpen(false);
           form.resetFields();
           
@@ -531,13 +596,18 @@ export default function AdminUsersPage() {
           };
 
           const refreshResponse = await userApiService.getAllUsers(params);
-          if (refreshResponse.Success && refreshResponse.Data) {
-            const mappedUsers = refreshResponse.Data.map(mapUserFromApi);
+          const { success: refreshSuccess, data, totalCount } =
+            normalizeApiResponse(refreshResponse);
+
+          if (refreshSuccess && Array.isArray(data)) {
+            const mappedUsers = data
+              .map(mapUserFromApi)
+              .filter((user) => user && user.userId);
             setUsers(mappedUsers);
-            setTotalCount(refreshResponse.TotalCount || 0);
+            setTotalCount(totalCount || data.length || 0);
           }
         } else {
-          message.error(response.Message || 'Không thể cập nhật user');
+          message.error(apiMessage || 'Không thể cập nhật user');
         }
       }
     } catch (error) {
@@ -717,7 +787,7 @@ export default function AdminUsersPage() {
         ]}
         width={900}
         maskClosable={false}
-        destroyOnClose
+        destroyOnHidden
       >
         <Spin spinning={detailLoading}>
           {userDetail && (
