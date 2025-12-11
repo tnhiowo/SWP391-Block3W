@@ -3,6 +3,7 @@ import {
   Button,
   Form,
   Input,
+  InputNumber,
   Modal,
   Select,
   Table,
@@ -15,14 +16,6 @@ import { clubApiService } from '../../services/clubApiService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
-
-const CATEGORY_OPTIONS = [
-  { label: 'Học thuật', value: 'Học thuật' },
-  { label: 'Thể thao', value: 'Thể thao' },
-  { label: 'Văn nghệ', value: 'Văn nghệ' },
-  { label: 'Tình nguyện', value: 'Tình nguyện' },
-  { label: 'Khác', value: 'Khác' },
-];
 
 const STATUS_OPTIONS = [
   { label: 'Đang hoạt động', value: 'ACTIVE' },
@@ -44,6 +37,35 @@ const STATUS_COLORS = {
   SUSPENDED: 'red',
   INACTIVE: undefined,
 };
+
+const FILTER_SESSION_KEY = 'admin_clubs_filter';
+const DEFAULT_FILTERS = {
+  pageNumber: 1,
+  pageSize: 10,
+  searchKeyword: '',
+  status: 'ALL',
+  sortBy: null,
+  sortOrder: null,
+};
+
+const SORT_FIELD_MAP = {
+  clubName: 'ClubName',
+  memberCount: 'MemberCount',
+  createdAt: 'CreatedAt',
+  status: 'Status',
+};
+
+const SORT_BY_OPTIONS = [
+  { label: 'Tên CLB', value: 'ClubName' },
+  { label: 'Số thành viên', value: 'MemberCount' },
+  { label: 'Ngày tạo', value: 'CreatedAt' },
+  { label: 'Trạng thái', value: 'Status' },
+];
+
+const SORT_ORDER_OPTIONS = [
+  { label: 'Tăng dần', value: 'asc' },
+  { label: 'Giảm dần', value: 'desc' },
+];
 
 function normalizeStatus(status) {
   if (!status) return 'UNKNOWN';
@@ -70,9 +92,20 @@ function formatDate(dateString) {
 
 export default function AdminClubsPage() {
   const [clubs, setClubs] = useState([]);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [filters, setFilters] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(FILTER_SESSION_KEY);
+      if (saved) return { ...DEFAULT_FILTERS, ...JSON.parse(saved) };
+    } catch (_) {
+      /* ignore corrupted session data */
+    }
+    return DEFAULT_FILTERS;
+  });
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailClub, setDetailClub] = useState(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -84,7 +117,6 @@ export default function AdminClubsPage() {
     clubId: club.ClubId ?? club.clubId,
     clubName: club.ClubName ?? club.clubName ?? '',
     description: club.Description ?? club.description ?? '',
-    category: club.Category ?? club.category ?? 'Khác',
     presidentId: club.PresidentId ?? club.presidentId ?? null,
     presidentName: club.PresidentName ?? club.presidentName ?? 'Chưa cập nhật',
     memberCount: club.MemberCount ?? club.memberCount ?? 0,
@@ -93,57 +125,42 @@ export default function AdminClubsPage() {
     joinFee: club.JoinFee ?? club.joinFee ?? null,
   });
 
-  const presidentOptions = useMemo(() => {
-    const unique = new Map();
-    clubs.forEach((club) => {
-      if (club.presidentId) {
-        unique.set(club.presidentId, club.presidentName || `User ${club.presidentId}`);
-      }
-    });
-    return Array.from(unique.entries()).map(([value, name]) => ({
-      label: `${name} (UserID ${value})`,
-      value,
-      name,
-    }));
-  }, [clubs]);
+  const fetchClubs = async (query = filters) => {
+    setLoading(true);
+    try {
+      const params = {
+        PageNumber: query.pageNumber,
+        PageSize: query.pageSize,
+        Search: query.searchKeyword || undefined,
+        SortBy: query.sortBy || undefined,
+        SortOrder: query.sortOrder || undefined,
+      };
+      if (query.status && query.status !== 'ALL') params.status = query.status;
+
+      const res = await clubApiService.getAllClubs(params);
+      const dataList = res.Data ?? res.data ?? res.items ?? [];
+      const totalCount =
+        res.TotalCount ?? res.totalCount ?? res.total ?? dataList.length ?? 0;
+      setClubs(dataList.map(mapClubFromApi));
+      setTotal(totalCount);
+    } catch (err) {
+      message.error(err.message || 'Không tải được danh sách CLB');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchClubs = async () => {
-      setLoading(true);
-      try {
-        const res = await clubApiService.getAllClubs();
-        const dataList = res.Data || res.data || [];
-        setClubs(dataList.map(mapClubFromApi));
-      } catch (err) {
-        message.error(err.message || 'Không tải được danh sách CLB');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClubs();
-  }, []);
-
-  const filteredClubs = useMemo(() => {
-    return clubs.filter((club) => {
-      const matchesSearch = (club.clubName || '')
-        .toLowerCase()
-        .includes(searchKeyword.trim().toLowerCase());
-
-      const matchesStatus =
-        statusFilter === 'ALL'
-          ? true
-          : normalizeStatus(club.status) === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [clubs, searchKeyword, statusFilter]);
+    sessionStorage.setItem(FILTER_SESSION_KEY, JSON.stringify(filters));
+    fetchClubs(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const handleOpenCreateModal = () => {
     setEditingClub(null);
     form.resetFields();
     form.setFieldsValue({
-      status: 'ACTIVE',
+      joinFee: 0,
     });
     setIsCreateModalOpen(true);
   };
@@ -152,111 +169,137 @@ export default function AdminClubsPage() {
     setEditingClub(club);
     form.setFieldsValue({
       clubName: club.clubName,
-      category: club.category,
       description: club.description,
-      presidentId: club.presidentId,
-      status: club.status,
+      joinFee: club.joinFee ?? 0,
     });
     setIsEditModalOpen(true);
   };
 
-  const handleCreateSubmit = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        const presidentOption = presidentOptions.find(
-          (p) => p.value === values.presidentId
-        );
-        const newClub = {
-          clubId: Date.now(),
-          clubName: values.clubName,
-          description: values.description || '',
-          category: values.category,
-          presidentId: values.presidentId,
-          presidentName: presidentOption ? presidentOption.name : '',
-          memberCount: 0,
-          status: values.status || 'ACTIVE',
-          createdAt: new Date().toISOString(),
-        };
+  const handleCreateSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
 
-        setClubs((prev) => [...prev, newClub]);
-        message.success('Thêm CLB thành công (mock)');
-        setIsCreateModalOpen(false);
-        form.resetFields();
-      })
-      .catch(() => {});
+      const payload = {
+        clubName: values.clubName,
+        description: values.description || '',
+        joinFee: Number(values.joinFee) || 0,
+      };
+
+      const res = await clubApiService.createClub(payload);
+      const resMessage = res?.message || res?.Message || 'Tạo CLB thành công';
+      message.success(resMessage);
+
+      await fetchClubs();
+      setIsCreateModalOpen(false);
+      form.resetFields();
+    } catch (err) {
+      if (err?.errorFields) return;
+      message.error(err?.message || 'Không thể tạo CLB');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditSubmit = () => {
+  const handleEditSubmit = async () => {
     if (!editingClub) return;
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
 
-    form
-      .validateFields()
-      .then((values) => {
-        const presidentOption = presidentOptions.find(
-          (p) => p.value === values.presidentId
-        );
-        setClubs((prev) =>
-          prev.map((club) =>
-            club.clubId === editingClub.clubId
-              ? {
-                  ...club,
-                  clubName: values.clubName,
-                  description: values.description || '',
-                  category: values.category,
-                  presidentId: values.presidentId,
-                  presidentName: presidentOption
-                    ? presidentOption.name
-                    : club.presidentName,
-                  status: values.status,
-                }
-              : club
-          )
-        );
+      const payload = {
+        clubName: values.clubName,
+        description: values.description || '',
+        joinFee: Number(values.joinFee) || 0,
+      };
 
-        message.success('Cập nhật CLB thành công (mock)');
-        setIsEditModalOpen(false);
-        setEditingClub(null);
-        form.resetFields();
-      })
-      .catch(() => {});
+      const res = await clubApiService.updateClub(editingClub.clubId, payload);
+      const resMessage = res?.message || res?.Message || 'Cập nhật CLB thành công';
+      message.success(resMessage);
+      await fetchClubs();
+      setIsEditModalOpen(false);
+      setEditingClub(null);
+      form.resetFields();
+    } catch (err) {
+      if (err?.errorFields) return;
+      message.error(err?.message || 'Không thể cập nhật CLB');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleToggleStatus = (club) => {
+  const handleViewDetail = async (clubId) => {
+    setDetailModalOpen(true);
+    setDetailLoading(true);
+    try {
+      const res = await clubApiService.getClubById(clubId);
+      const data = res?.Data ?? res?.data ?? res;
+      setDetailClub(mapClubFromApi(data));
+    } catch (err) {
+      setDetailClub(null);
+      message.error(err?.message || 'Không tải được chi tiết CLB');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleApproveClub = (club) => {
     Modal.confirm({
-      title:
-        club.status === 'ACTIVE'
-          ? 'Bạn có chắc muốn Đóng CLB này không?'
-          : 'Bạn có chắc muốn Mở lại CLB này không?',
-      okText: 'Xác nhận',
+      title: 'Duyệt CLB này?',
+      okText: 'Duyệt',
       cancelText: 'Hủy',
-      onOk: () => {
-        setClubs((prev) =>
-          prev.map((c) =>
-            c.clubId === club.clubId
-              ? {
-                  ...c,
-                  status: c.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
-                }
-              : c
-          )
-        );
-        message.success('Cập nhật trạng thái CLB thành công (mock)');
+      onOk: async () => {
+        setLoading(true);
+        try {
+          const res = await clubApiService.approveClub(club.clubId);
+          const resMessage = res?.message || res?.Message || 'Duyệt CLB thành công';
+          if (res?.success === false) {
+            message.warning(resMessage);
+          } else {
+            message.success(resMessage);
+          }
+          await fetchClubs();
+        } catch (err) {
+          message.error(err?.message || 'Không thể duyệt CLB');
+        } finally {
+          setLoading(false);
+        }
       },
     });
+  };
+
+  const handleTableChange = (pagination, _filters, sorter) => {
+    const sortBy = SORT_FIELD_MAP[sorter.field] || null;
+    const sortOrder =
+      sorter.order === 'ascend'
+        ? 'asc'
+        : sorter.order === 'descend'
+        ? 'desc'
+        : null;
+
+    setFilters((prev) => ({
+      ...prev,
+      pageNumber: pagination.current,
+      pageSize: pagination.pageSize,
+      sortBy,
+      sortOrder,
+    }));
   };
 
   const columns = useMemo(
     () => [
       {
+        title: 'STT',
+        dataIndex: 'clubId',
+        key: 'clubId',
+        width: 80,
+        render: (value) => value ?? '-',
+      },
+      {
         title: 'Tên CLB',
         dataIndex: 'clubName',
         key: 'clubName',
-      },
-      {
-        title: 'Lĩnh vực',
-        dataIndex: 'category',
-        key: 'category',
+        sorter: true,
       },
       {
         title: 'Chủ nhiệm',
@@ -273,36 +316,36 @@ export default function AdminClubsPage() {
         dataIndex: 'status',
         key: 'status',
         render: renderStatusTag,
+        sorter: true,
       },
       {
         title: 'Ngày tạo',
         dataIndex: 'createdAt',
         key: 'createdAt',
         render: (value) => formatDate(value),
+        sorter: true,
       },
       {
         title: 'Thao tác',
         key: 'actions',
         render: (_, record) => (
           <Space>
-            <Button size="small" type="link">
+            <Button size="small" type="link" onClick={() => handleViewDetail(record.clubId)}>
               Xem chi tiết
             </Button>
             <Button size="small" onClick={() => handleOpenEditModal(record)}>
               Sửa
             </Button>
-            <Button
-              size="small"
-              type="link"
-              onClick={() => handleToggleStatus(record)}
-            >
-              {record.status === 'ACTIVE' ? 'Đóng CLB' : 'Mở lại'}
-            </Button>
+            {normalizeStatus(record.status) === 'PENDING' && (
+              <Button size="small" type="link" onClick={() => handleApproveClub(record)}>
+                Duyệt
+              </Button>
+            )}
           </Space>
         ),
       },
     ],
-    []
+    [handleOpenEditModal, handleApproveClub, handleViewDetail]
   );
 
   return (
@@ -337,14 +380,52 @@ export default function AdminClubsPage() {
       >
         <Input
           placeholder="Tìm kiếm theo tên CLB"
-          value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
+          value={filters.searchKeyword}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              searchKeyword: e.target.value,
+              pageNumber: 1,
+            }))
+          }
           style={{ maxWidth: 300 }}
           allowClear
         />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Select
+            placeholder="Sắp xếp theo"
+            value={filters.sortBy}
+            onChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                sortBy: value || null,
+                pageNumber: 1,
+              }))
+            }
+            allowClear
+            style={{ width: 180 }}
+            options={SORT_BY_OPTIONS}
+          />
+          <Select
+            placeholder="Thứ tự"
+            value={filters.sortOrder}
+            onChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                sortOrder: value || null,
+                pageNumber: 1,
+              }))
+            }
+            allowClear
+            style={{ width: 140 }}
+            options={SORT_ORDER_OPTIONS}
+          />
+        </div>
         <Select
-          value={statusFilter}
-          onChange={setStatusFilter}
+          value={filters.status}
+          onChange={(value) =>
+            setFilters((prev) => ({ ...prev, status: value, pageNumber: 1 }))
+          }
           style={{ width: 200 }}
           options={[{ label: 'Tất cả trạng thái', value: 'ALL' }, ...STATUS_OPTIONS]}
         />
@@ -353,10 +434,62 @@ export default function AdminClubsPage() {
       <Table
         rowKey="clubId"
         columns={columns}
-        dataSource={filteredClubs}
+        dataSource={clubs}
         loading={loading}
-        pagination={{ pageSize: 5 }}
+        pagination={{
+          current: filters.pageNumber,
+          pageSize: filters.pageSize,
+          total,
+          showSizeChanger: true,
+          showTotal: (t) => `${t} CLB`,
+        }}
+        onChange={handleTableChange}
       />
+
+      <Modal
+        title="Chi tiết CLB"
+        open={detailModalOpen}
+        onCancel={() => {
+          setDetailModalOpen(false);
+          setDetailClub(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => setDetailModalOpen(false)}>
+            Đóng
+          </Button>,
+        ]}
+      >
+        {detailLoading ? (
+          <p>Đang tải...</p>
+        ) : detailClub ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div>
+              <strong>Tên CLB:</strong> {detailClub.clubName}
+            </div>
+            <div>
+              <strong>Mô tả:</strong> {detailClub.description || 'Chưa cập nhật'}
+            </div>
+            <div>
+              <strong>Số thành viên:</strong> {detailClub.memberCount ?? 0}
+            </div>
+            <div>
+              <strong>Chủ nhiệm:</strong> {detailClub.presidentName || 'Chưa cập nhật'}
+            </div>
+            <div>
+              <strong>Ngày tạo:</strong> {formatDate(detailClub.createdAt)}
+            </div>
+            <div>
+              <strong>Phí tham gia:</strong>{' '}
+              {detailClub.joinFee != null ? `${detailClub.joinFee}` : 'Chưa cập nhật'}
+            </div>
+            <div>
+              <strong>Trạng thái:</strong> {renderStatusTag(detailClub.status)}
+            </div>
+          </div>
+        ) : (
+          <p>Không có dữ liệu CLB.</p>
+        )}
+      </Modal>
 
       <Modal
         title="Thêm CLB mới"
@@ -378,35 +511,20 @@ export default function AdminClubsPage() {
             <Input placeholder="Nhập tên CLB" />
           </Form.Item>
 
-          <Form.Item
-            label="Lĩnh vực"
-            name="category"
-            rules={[{ required: true, message: 'Vui lòng chọn lĩnh vực' }]}
-          >
-            <Select options={CATEGORY_OPTIONS} placeholder="Chọn lĩnh vực" />
-          </Form.Item>
-
           <Form.Item label="Mô tả" name="description">
             <TextArea rows={3} placeholder="Mô tả ngắn về CLB (không bắt buộc)" />
           </Form.Item>
 
           <Form.Item
-            label="Chủ nhiệm CLB"
-            name="presidentId"
-            rules={[{ required: true, message: 'Vui lòng chọn chủ nhiệm CLB' }]}
+            label="Phí tham gia"
+            name="joinFee"
+            rules={[{ required: true, message: 'Vui lòng nhập phí tham gia' }]}
           >
-            <Select
-              options={presidentOptions}
-              placeholder="Chọn chủ nhiệm CLB"
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              placeholder="Nhập phí tham gia"
             />
-          </Form.Item>
-
-          <Form.Item
-            label="Trạng thái"
-            name="status"
-            initialValue="ACTIVE"
-          >
-            <Select options={STATUS_OPTIONS} />
           </Form.Item>
         </Form>
       </Modal>
@@ -432,35 +550,20 @@ export default function AdminClubsPage() {
             <Input placeholder="Nhập tên CLB" />
           </Form.Item>
 
-          <Form.Item
-            label="Lĩnh vực"
-            name="category"
-            rules={[{ required: true, message: 'Vui lòng chọn lĩnh vực' }]}
-          >
-            <Select options={CATEGORY_OPTIONS} placeholder="Chọn lĩnh vực" />
-          </Form.Item>
-
           <Form.Item label="Mô tả" name="description">
             <TextArea rows={3} placeholder="Mô tả ngắn về CLB (không bắt buộc)" />
           </Form.Item>
 
           <Form.Item
-            label="Chủ nhiệm CLB"
-            name="presidentId"
-            rules={[{ required: true, message: 'Vui lòng chọn chủ nhiệm CLB' }]}
+            label="Phí tham gia"
+            name="joinFee"
+            rules={[{ required: true, message: 'Vui lòng nhập phí tham gia' }]}
           >
-            <Select
-              options={presidentOptions}
-              placeholder="Chọn chủ nhiệm CLB"
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              placeholder="Nhập phí tham gia"
             />
-          </Form.Item>
-
-          <Form.Item
-            label="Trạng thái"
-            name="status"
-            initialValue="ACTIVE"
-          >
-            <Select options={STATUS_OPTIONS} />
           </Form.Item>
         </Form>
       </Modal>
