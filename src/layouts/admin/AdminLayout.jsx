@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Layout,
@@ -8,11 +8,17 @@ import {
   theme,
   Dropdown,
   Tag,
+  Modal,
+  Form,
+  Input,
+  Button,
+  message,
 } from 'antd';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, UserOutlined, KeyOutlined } from '@ant-design/icons';
 import AdminSidebar from './AdminSidebar';
 import { adminChildRoutes } from '../../routes/adminRoutes';
 import { useAuth } from '../../contexts/AuthContext';
+import { userApiService } from '../../services/userApiService';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -32,6 +38,9 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [pwdModalOpen, setPwdModalOpen] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdForm] = Form.useForm();
 
   const activeRoute = useMemo(
     () =>
@@ -60,7 +69,14 @@ export default function AdminLayout() {
     {
       key: 'profile',
       label: 'Thông tin cá nhân',
+      icon: <UserOutlined />,
       onClick: () => navigate('/admin/profile'),
+    },
+    {
+      key: 'change-password',
+      label: 'Đổi mật khẩu',
+      icon: <KeyOutlined />,
+      onClick: () => setPwdModalOpen(true),
     },
     { type: 'divider' },
     {
@@ -70,6 +86,22 @@ export default function AdminLayout() {
       onClick: logout,
     },
   ];
+
+  const handleChangePassword = async () => {
+    try {
+      const values = await pwdForm.validateFields();
+      setPwdLoading(true);
+      await userApiService.changePassword(values);
+      message.success('Đổi mật khẩu thành công');
+      setPwdModalOpen(false);
+      pwdForm.resetFields();
+    } catch (err) {
+      if (err?.errorFields) return;
+      message.error(err?.message || 'Đổi mật khẩu thất bại');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
 
   return (
     <Layout
@@ -161,6 +193,58 @@ export default function AdminLayout() {
             <Outlet />
           </div>
         </Content>
+
+        <Modal
+          title="Đổi mật khẩu"
+          open={pwdModalOpen}
+          onCancel={() => {
+            setPwdModalOpen(false);
+            pwdForm.resetFields();
+          }}
+          onOk={handleChangePassword}
+          okText="Đổi mật khẩu"
+          cancelText="Hủy"
+          confirmLoading={pwdLoading}
+          destroyOnClose
+        >
+          <Form form={pwdForm} layout="vertical">
+            <Form.Item
+              name="currentPassword"
+              label="Mật khẩu hiện tại"
+              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+            >
+              <Input.Password placeholder="Nhập mật khẩu hiện tại" />
+            </Form.Item>
+            <Form.Item
+              name="newPassword"
+              label="Mật khẩu mới"
+              rules={[
+                { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+                { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự' },
+              ]}
+            >
+              <Input.Password placeholder="Nhập mật khẩu mới" />
+            </Form.Item>
+            <Form.Item
+              name="confirmPassword"
+              label="Xác nhận mật khẩu"
+              dependencies={['newPassword']}
+              rules={[
+                { required: true, message: 'Vui lòng xác nhận mật khẩu mới' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('newPassword') === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Mật khẩu xác nhận không khớp'));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password placeholder="Nhập lại mật khẩu mới" />
+            </Form.Item>
+          </Form>
+        </Modal>
       </Layout>
     </Layout>
   );

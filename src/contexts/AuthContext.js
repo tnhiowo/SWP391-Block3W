@@ -25,6 +25,13 @@ export const AuthProvider = ({ children }) => {
         loadUser();
     },[]);
 
+    useEffect(() => {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) return;
+        // Refresh profile to keep avatar and role in sync
+        loadUser();
+    },[]);
+
     const login = async (data) => {
         try {
             const res = await authApiService.login(data);
