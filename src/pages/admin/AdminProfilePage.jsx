@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Form,
@@ -25,6 +25,7 @@ import {
   CameraOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { userApiService } from '../../services/userApiService';
 
 const { Title, Text } = Typography;
 
@@ -49,16 +50,63 @@ export default function AdminProfilePage() {
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [profile, setProfile] = useState(() => {
+    if (!user) return null;
+    return {
+      userId: user.userId,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
+      role: user.roles?.[0],
+    };
+  });
+
+  const fetchProfile = useCallback(async () => {
+    setIsFetching(true);
+    try {
+      const res = await userApiService.getProfile();
+      const data = res.data ?? res ?? {};
+      const profileData = {
+        userId: data.userId,
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        avatar: data.avatar,
+        role: data.role,
+        accountStatus: data.accountStatus,
+        createdAt: data.createdAt,
+        lastLogin: data.lastLogin,
+      };
+      setProfile(profileData);
+      form.setFieldsValue({
+        fullName: profileData.fullName || '',
+        email: profileData.email || '',
+        phone: profileData.phone || '',
+        avatar: profileData.avatar || '',
+      });
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      message.error(error.message || 'Không thể tải thông tin hồ sơ');
+    } finally {
+      setIsFetching(false);
+    }
+  }, [form]);
 
   useEffect(() => {
-    if (user) {
-      form.setFieldsValue({
-        fullName: user.fullName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-      });
-    }
-  }, [user, form]);
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (!profile) return;
+    form.setFieldsValue({
+      fullName: profile.fullName || '',
+      email: profile.email || '',
+      phone: profile.phone || '',
+      avatar: profile.avatar || '',
+    });
+  }, [profile, form]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -66,11 +114,12 @@ export default function AdminProfilePage() {
 
   const handleCancel = () => {
     setIsEditing(false);
-    if (user) {
+    if (profile) {
       form.setFieldsValue({
-        fullName: user.fullName || '',
-        email: user.email || '',
-        phone: user.phone || '',
+        fullName: profile.fullName || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        avatar: profile.avatar || '',
       });
     }
   };
@@ -80,10 +129,10 @@ export default function AdminProfilePage() {
       const values = await form.validateFields();
       setLoading(true);
 
-      // TODO: Call API to update profile
-      // await userApiService.updateProfile(values);
-
+      await userApiService.updateProfile(values);
       message.success('Cập nhật thông tin thành công');
+      await fetchProfile();
+
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -118,6 +167,7 @@ export default function AdminProfilePage() {
           {/* Left Column: Avatar & Basic Info */}
           <Col xs={24} md={8}>
             <Card
+              loading={isFetching}
               style={{
                 textAlign: 'center',
                 borderRadius: 16,
@@ -128,7 +178,7 @@ export default function AdminProfilePage() {
                 <div>
                   <Avatar
                     size={120}
-                    src={user?.avatar}
+                    src={profile?.avatar}
                     style={{
                       backgroundColor: '#7f56da',
                       fontSize: 48,
@@ -136,16 +186,16 @@ export default function AdminProfilePage() {
                       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     }}
                   >
-                    {getInitials(user?.fullName)}
+                    {getInitials(profile?.fullName)}
                   </Avatar>
                 </div>
 
                 <div>
                   <Title level={4} style={{ margin: 0 }}>
-                    {user?.fullName || 'Admin'}
+                    {profile?.fullName || 'Admin'}
                   </Title>
                   <Text type="secondary" style={{ fontSize: 14 }}>
-                    {user?.email || 'admin@example.com'}
+                    {profile?.email || 'admin@example.com'}
                   </Text>
                 </div>
 
@@ -162,14 +212,14 @@ export default function AdminProfilePage() {
                     <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
                       User ID
                     </Text>
-                    <Text strong>{user?.userId || 'N/A'}</Text>
+                    <Text strong>{profile?.userId || 'N/A'}</Text>
                   </div>
                   <div>
                     <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
                       Vai trò
                     </Text>
                     <Text strong>
-                      {user?.roles?.[0] === 'Admin' ? 'Quản trị viên' : user?.roles?.[0] || 'Admin'}
+                      {profile?.role === 'Admin' ? 'Quản trị viên' : profile?.role || 'Admin'}
                     </Text>
                   </div>
                 </div>
@@ -209,6 +259,7 @@ export default function AdminProfilePage() {
                   </Space>
                 )
               }
+              loading={isFetching}
               style={{ borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
             >
               <Form
@@ -294,16 +345,22 @@ export default function AdminProfilePage() {
             >
               <Descriptions column={1} bordered>
                 <Descriptions.Item label="User ID">
-                  {user?.userId || 'N/A'}
+                  {profile?.userId || 'N/A'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Email">
-                  {user?.email || 'N/A'}
+                  {profile?.email || 'N/A'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Vai trò">
-                  <Tag color="red">Admin</Tag>
+                  <Tag color="red">{profile?.role || 'Admin'}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
-                  <Tag color="green">Đang hoạt động</Tag>
+                  <Tag color="green">{profile?.accountStatus || 'Đang hoạt động'}</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo">
+                  {formatDate(profile?.createdAt)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Đăng nhập gần nhất">
+                  {formatDate(profile?.lastLogin)}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
