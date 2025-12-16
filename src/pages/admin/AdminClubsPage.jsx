@@ -126,8 +126,8 @@ export default function AdminClubsPage() {
   });
 
   const fetchClubs = async (query = filters) => {
-    setLoading(true);
-    try {
+      setLoading(true);
+      try {
       const params = {
         PageNumber: query.pageNumber,
         PageSize: query.pageSize,
@@ -141,14 +141,14 @@ export default function AdminClubsPage() {
       const dataList = res.Data ?? res.data ?? res.items ?? [];
       const totalCount =
         res.TotalCount ?? res.totalCount ?? res.total ?? dataList.length ?? 0;
-      setClubs(dataList.map(mapClubFromApi));
+        setClubs(dataList.map(mapClubFromApi));
       setTotal(totalCount);
-    } catch (err) {
-      message.error(err.message || 'Không tải được danh sách CLB');
-    } finally {
-      setLoading(false);
-    }
-  };
+      } catch (err) {
+        message.error(err.message || 'Không tải được danh sách CLB');
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     sessionStorage.setItem(FILTER_SESSION_KEY, JSON.stringify(filters));
@@ -181,8 +181,8 @@ export default function AdminClubsPage() {
       setLoading(true);
 
       const payload = {
-        clubName: values.clubName,
-        description: values.description || '',
+          clubName: values.clubName,
+          description: values.description || '',
         joinFee: Number(values.joinFee) || 0,
       };
 
@@ -191,8 +191,8 @@ export default function AdminClubsPage() {
       message.success(resMessage);
 
       await fetchClubs();
-      setIsCreateModalOpen(false);
-      form.resetFields();
+        setIsCreateModalOpen(false);
+        form.resetFields();
     } catch (err) {
       if (err?.errorFields) return;
       message.error(err?.message || 'Không thể tạo CLB');
@@ -208,8 +208,8 @@ export default function AdminClubsPage() {
       setLoading(true);
 
       const payload = {
-        clubName: values.clubName,
-        description: values.description || '',
+                  clubName: values.clubName,
+                  description: values.description || '',
         joinFee: Number(values.joinFee) || 0,
       };
 
@@ -217,9 +217,9 @@ export default function AdminClubsPage() {
       const resMessage = res?.message || res?.Message || 'Cập nhật CLB thành công';
       message.success(resMessage);
       await fetchClubs();
-      setIsEditModalOpen(false);
-      setEditingClub(null);
-      form.resetFields();
+        setIsEditModalOpen(false);
+        setEditingClub(null);
+        form.resetFields();
     } catch (err) {
       if (err?.errorFields) return;
       message.error(err?.message || 'Không thể cập nhật CLB');
@@ -261,6 +261,27 @@ export default function AdminClubsPage() {
           await fetchClubs();
         } catch (err) {
           message.error(err?.message || 'Không thể duyệt CLB');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleSuspendClub = (club) => {
+    Modal.confirm({
+      title: 'Đình chỉ CLB này?',
+      okText: 'Đình chỉ',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setLoading(true);
+        try {
+          const res = await clubApiService.suspendClub(club.clubId);
+          const resMessage = res?.message || res?.Message || 'Đình chỉ CLB thành công';
+          message.success(resMessage);
+          await fetchClubs();
+        } catch (err) {
+          message.error(err?.message || 'Không thể đình chỉ CLB');
         } finally {
           setLoading(false);
         }
@@ -328,24 +349,32 @@ export default function AdminClubsPage() {
       {
         title: 'Thao tác',
         key: 'actions',
-        render: (_, record) => (
-          <Space>
-            <Button size="small" type="link" onClick={() => handleViewDetail(record.clubId)}>
-              Xem chi tiết
-            </Button>
-            <Button size="small" onClick={() => handleOpenEditModal(record)}>
-              Sửa
-            </Button>
-            {normalizeStatus(record.status) === 'PENDING' && (
-              <Button size="small" type="link" onClick={() => handleApproveClub(record)}>
-                Duyệt
+        render: (_, record) => {
+          const normalizedStatus = normalizeStatus(record.status);
+          return (
+            <Space>
+              <Button size="small" type="link" onClick={() => handleViewDetail(record.clubId)}>
+                Xem chi tiết
               </Button>
-            )}
-          </Space>
-        ),
+              <Button size="small" onClick={() => handleOpenEditModal(record)}>
+                Sửa
+              </Button>
+              {normalizedStatus === 'PENDING' && (
+                <Button size="small" type="link" onClick={() => handleApproveClub(record)}>
+                  Duyệt
+                </Button>
+              )}
+              {normalizedStatus !== 'SUSPENDED' && normalizedStatus !== 'PENDING' && (
+                <Button size="small" type="link" danger onClick={() => handleSuspendClub(record)}>
+                  Đình chỉ
+                </Button>
+              )}
+            </Space>
+          );
+        },
       },
     ],
-    [handleOpenEditModal, handleApproveClub, handleViewDetail]
+    [handleOpenEditModal, handleApproveClub, handleViewDetail, handleSuspendClub]
   );
 
   return (
