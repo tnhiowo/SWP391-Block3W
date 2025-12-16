@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Row, Col, Card, Typography, Space, Statistic, theme } from "antd";
+import { Row, Col, Card, Typography, Space, Statistic, theme, Table, Tag } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -12,6 +12,56 @@ import { userApiService } from "../../services/userApiService";
 import { clubApiService } from "../../services/clubApiService";
 
 const { Title, Text } = Typography;
+
+const activityColumns = [
+  {
+    title: "Thời gian",
+    dataIndex: "time",
+    key: "time",
+    width: 160,
+  },
+  {
+    title: "Loại hoạt động",
+    dataIndex: "type",
+    key: "type",
+    width: 160,
+    render: (type) => {
+      const map = {
+        USER: { color: "blue", label: "User" },
+        CLUB: { color: "green", label: "CLB" },
+        FEE: { color: "purple", label: "Phí" },
+      };
+      const cfg = map[type] || { color: "default", label: type };
+      return <Tag color={cfg.color}>{cfg.label}</Tag>;
+    },
+  },
+  {
+    title: "Mô tả",
+    dataIndex: "description",
+    key: "description",
+  },
+];
+
+const recentActivities = [
+  {
+    key: 1,
+    time: "Hôm nay, 09:15",
+    type: "USER",
+    description: "User mới đăng ký tài khoản",
+  },
+  {
+    key: 2,
+    time: "Hôm nay, 08:40",
+    type: "CLB",
+    description: "CLB mới được tạo bởi Leader",
+  },
+  {
+    key: 3,
+    time: "Hôm qua, 16:20",
+    type: "FEE",
+    description: "Sinh viên thanh toán phí CLB Lập trình",
+  },
+];
 
 export default function AdminDashboardPage() {
   const { token } = theme.useToken();
