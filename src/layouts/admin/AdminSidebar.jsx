@@ -6,6 +6,8 @@ import {
   UserOutlined,
   TeamOutlined,
   AuditOutlined,
+  FileTextOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { adminChildRoutes } from '../../routes/adminRoutes';
 
@@ -17,7 +19,8 @@ const iconMap = {
   users: <UserOutlined />,
   clubs: <TeamOutlined />,
   invoices: <AuditOutlined />,
-  profile: null,
+  posts: <FileTextOutlined />,
+  profile: <SettingOutlined />,
 };
 
 const getFullPath = (route) =>
@@ -37,17 +40,9 @@ export default function AdminSidebar() {
       );
     }) || adminChildRoutes[0];
 
-  const sidebarItems = adminChildRoutes
-    .filter((route) => route.showInSidebar !== false)
-    .map((item) => {
-      const fullPath = getFullPath(item);
-      return {
-        key: item.key,
-        icon: iconMap[item.iconKey] || null,
-        label: item.label,
-        onClick: () => navigate(fullPath),
-      };
-    });
+  const sidebarItems = adminChildRoutes.filter(
+    (route) => route.showInSidebar !== false
+  );
 
   return (
     <Sider
@@ -122,3 +117,4 @@ export default function AdminSidebar() {
     </Sider>
   );
 }
+
