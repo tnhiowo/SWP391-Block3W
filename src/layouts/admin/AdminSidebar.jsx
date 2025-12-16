@@ -6,6 +6,7 @@ import {
   UserOutlined,
   TeamOutlined,
   AuditOutlined,
+  FileTextOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import { adminChildRoutes } from '../../routes/adminRoutes';
@@ -18,6 +19,7 @@ const iconMap = {
   users: <UserOutlined />,
   clubs: <TeamOutlined />,
   invoices: <AuditOutlined />,
+  posts: <FileTextOutlined />,
   profile: <SettingOutlined />,
 };
 
