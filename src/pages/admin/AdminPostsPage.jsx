@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Input,
+  InputNumber,
   Modal,
   Select,
   Space,
@@ -24,6 +25,7 @@ const DEFAULT_FILTERS = {
   pageNumber: 1,
   pageSize: 10,
   search: '',
+  clubId: null,
   visibility: 'ALL',
 };
 
@@ -68,7 +70,8 @@ function AdminPostsPage() {
     }
     return DEFAULT_FILTERS;
   });
-  const [searchText, setSearchText] = useState(DEFAULT_FILTERS.search);
+  const [searchText, setSearchText] = useState(filters.search || '');
+  const [clubIdText, setClubIdText] = useState(filters.clubId ? String(filters.clubId) : '');
   const [total, setTotal] = useState(0);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -91,9 +94,10 @@ function AdminPostsPage() {
     setLoading(true);
     try {
       const params = {
-        PageNumber: query.pageNumber,
-        PageSize: query.pageSize,
-        Search: query.search || undefined,
+        pageNumber: query.pageNumber,
+        pageSize: query.pageSize,
+        search: query.search || undefined,
+        clubId: query.clubId || undefined,
         visibility: query.visibility && query.visibility !== 'ALL' ? query.visibility : undefined,
       };
 
@@ -115,6 +119,11 @@ function AdminPostsPage() {
     sessionStorage.setItem(FILTER_SESSION_KEY, JSON.stringify(filters));
     fetchPosts(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  useEffect(() => {
+    setSearchText(filters.search || '');
+    setClubIdText(filters.clubId ? String(filters.clubId) : '');
   }, [filters]);
 
   const handleViewDetail = useCallback(async (postId) => {
@@ -226,9 +235,9 @@ function AdminPostsPage() {
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <Input
-            placeholder="Tìm theo tên tác giả"
+            placeholder="Tìm theo nội dung"
             value={searchText}
             allowClear
             onChange={(e) => setSearchText(e.target.value)}
@@ -241,12 +250,29 @@ function AdminPostsPage() {
             }
             style={{ width: 260 }}
           />
+          <InputNumber
+            placeholder="ID CLB"
+            value={clubIdText ? Number(clubIdText) : null}
+            min={0}
+            onChange={(value) => {
+              setClubIdText(value !== null && value !== undefined ? String(value) : '');
+            }}
+            onPressEnter={() =>
+              setFilters((prev) => ({
+                ...prev,
+                clubId: clubIdText ? Number(clubIdText) : null,
+                pageNumber: 1,
+              }))
+            }
+            style={{ width: 140 }}
+          />
           <Button
             type="primary"
             onClick={() =>
               setFilters((prev) => ({
                 ...prev,
                 search: searchText.trim(),
+                clubId: clubIdText ? Number(clubIdText) : null,
                 pageNumber: 1,
               }))
             }
@@ -269,7 +295,15 @@ function AdminPostsPage() {
             style={{ width: 160 }}
             options={VISIBILITY_OPTIONS}
           />
-          <Button onClick={() => setFilters({ ...DEFAULT_FILTERS })}>Đặt lại</Button>
+          <Button
+            onClick={() => {
+              setFilters({ ...DEFAULT_FILTERS });
+              setSearchText('');
+              setClubIdText('');
+            }}
+          >
+            Đặt lại
+          </Button>
         </div>
       </div>
 
