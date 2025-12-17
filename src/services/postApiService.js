@@ -11,44 +11,36 @@ export const postApiService = {
         apiCall(`/posts/public/${id}`, {
             method: "GET",
         }),
-
-    // Quản trị / bảo vệ bởi token
+    
     getAllPosts: (filters = {}) => {
         const {
-            PageNumber,
             pageNumber,
-            PageSize,
             pageSize,
-            Search,
             search,
-            SearchKeyword,
-            searchKeyword,
-            SortBy,
-            sortBy,
-            SortOrder,
-            sortOrder,
-            Status,
             status,
-            ClubId,
             clubId,
+            visibility,
         } = filters;
 
         const queryParams = {
-            PageNumber: PageNumber ?? pageNumber,
-            PageSize: PageSize ?? pageSize,
-            Search: Search ?? search ?? SearchKeyword ?? searchKeyword,
-            SortBy: SortBy ?? sortBy,
-            SortOrder: SortOrder ?? sortOrder,
+            PageNumber: pageNumber,
+            PageSize: pageSize,
+            Search: search,
         };
 
-        const finalStatus = Status ?? status;
+        const finalStatus = status;
         if (finalStatus && finalStatus !== "ALL") {
             queryParams.Status = finalStatus;
         }
 
-        const finalClubId = ClubId ?? clubId;
+        const finalClubId = clubId;
         if (finalClubId) {
-            queryParams.ClubId = finalClubId;
+            queryParams.clubId = finalClubId;
+        }
+
+        const finalVisibility = visibility;
+        if (finalVisibility && finalVisibility !== "ALL") {
+            queryParams.visibility = finalVisibility;
         }
 
         return apiCall("/posts", {

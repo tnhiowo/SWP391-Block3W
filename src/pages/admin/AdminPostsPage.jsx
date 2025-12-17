@@ -1,8 +1,31 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Modal, Space, Table, Tag, Typography, message, Row, Col, Card, Spin, Avatar } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Button,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+  Row,
+  Col,
+  Card,
+  Spin,
+  Avatar,
+} from 'antd';
 import { postApiService } from '../../services/postApiService';
 
 const { Title } = Typography;
+
+const FILTER_SESSION_KEY = 'admin_posts_filter';
+const DEFAULT_FILTERS = {
+  pageNumber: 1,
+  pageSize: 10,
+  search: '',
+  visibility: 'ALL',
+};
 
 function formatDate(dateString) {
   if (!dateString) return '';
@@ -18,8 +41,13 @@ function formatDate(dateString) {
 const VISIBILITY_COLORS = {
   PUBLIC: 'green',
   PRIVATE: 'orange',
-  INTERNAL: 'blue',
 };
+
+const VISIBILITY_OPTIONS = [
+  { label: 'Tất cả chế độ', value: 'ALL' },
+  { label: 'Public', value: 'PUBLIC' },
+  { label: 'Private', value: 'PRIVATE' },
+];
 
 function getInitials(name) {
   if (!name) return 'P';
@@ -31,6 +59,17 @@ function getInitials(name) {
 function AdminPostsPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(FILTER_SESSION_KEY);
+      if (saved) return { ...DEFAULT_FILTERS, ...JSON.parse(saved) };
+    } catch (_) {
+      /* ignore corrupted session data */
+    }
+    return DEFAULT_FILTERS;
+  });
+  const [searchText, setSearchText] = useState(DEFAULT_FILTERS.search);
+  const [total, setTotal] = useState(0);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailPost, setDetailPost] = useState(null);
@@ -48,13 +87,23 @@ function AdminPostsPage() {
     updatedAt: post.UpdatedAt ?? post.updatedAt ?? null,
   });
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (query = filters) => {
     setLoading(true);
     try {
-      const res = await postApiService.getAllPosts();
+      const params = {
+        PageNumber: query.pageNumber,
+        PageSize: query.pageSize,
+        Search: query.search || undefined,
+        visibility: query.visibility && query.visibility !== 'ALL' ? query.visibility : undefined,
+      };
+
+      const res = await postApiService.getAllPosts(params);
       const dataList = res?.Data ?? res?.data ?? res?.items ?? res ?? [];
       const normalizedList = Array.isArray(dataList) ? dataList : dataList?.data ?? [];
+      const totalCount =
+        res?.TotalCount ?? res?.totalCount ?? res?.total ?? res?.Total ?? normalizedList.length ?? 0;
       setPosts(normalizedList.map(mapPostFromApi));
+      setTotal(totalCount);
     } catch (err) {
       message.error(err?.message || 'Không tải được danh sách bài đăng');
     } finally {
@@ -63,10 +112,12 @@ function AdminPostsPage() {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    sessionStorage.setItem(FILTER_SESSION_KEY, JSON.stringify(filters));
+    fetchPosts(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
-  const handleViewDetail = async (postId) => {
+  const handleViewDetail = useCallback(async (postId) => {
     setDetailModalOpen(true);
     setDetailLoading(true);
     try {
@@ -79,6 +130,14 @@ function AdminPostsPage() {
     } finally {
       setDetailLoading(false);
     }
+  }, []);
+
+  const handleTableChange = (pagination) => {
+    setFilters((prev) => ({
+      ...prev,
+      pageNumber: pagination.current,
+      pageSize: pagination.pageSize,
+    }));
   };
 
   const columns = useMemo(
@@ -157,16 +216,76 @@ function AdminPostsPage() {
         </Title>
       </div>
 
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start',
+          marginBottom: 16,
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Input
+            placeholder="Tìm theo tên tác giả"
+            value={searchText}
+            allowClear
+            onChange={(e) => setSearchText(e.target.value)}
+            onPressEnter={() =>
+              setFilters((prev) => ({
+                ...prev,
+                search: searchText.trim(),
+                pageNumber: 1,
+              }))
+            }
+            style={{ width: 260 }}
+          />
+          <Button
+            type="primary"
+            onClick={() =>
+              setFilters((prev) => ({
+                ...prev,
+                search: searchText.trim(),
+                pageNumber: 1,
+              }))
+            }
+          >
+            Tìm kiếm
+          </Button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Select
+            placeholder="Chế độ xem"
+            value={filters.visibility}
+            onChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                visibility: value,
+                pageNumber: 1,
+              }))
+            }
+            style={{ width: 160 }}
+            options={VISIBILITY_OPTIONS}
+          />
+          <Button onClick={() => setFilters({ ...DEFAULT_FILTERS })}>Đặt lại</Button>
+        </div>
+      </div>
+
       <Table
         rowKey="postId"
         columns={columns}
         dataSource={posts}
         loading={loading}
         pagination={{
-          pageSize: 10,
+          current: filters.pageNumber,
+          pageSize: filters.pageSize,
+          total,
           showSizeChanger: true,
           showTotal: (t) => `${t} bài đăng`,
         }}
+        onChange={handleTableChange}
       />
 
       <Modal
