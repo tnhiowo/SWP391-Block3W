@@ -3,7 +3,7 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminClubsPage from '../pages/admin/AdminClubsPage';
 import AdminInvoicesPage from '../pages/admin/AdminInvoicesPage';
-import AdminPostsPage from '../pages/admin/AdminPostsPage';
+// import AdminPostsPage from '../pages/admin/AdminPostsPage';
 import AdminProfilePage from '../pages/admin/AdminProfilePage';
 import { Navigate } from 'react-router-dom';
 import AdminGuard from '../components/guards/AdminGuard';
@@ -38,13 +38,13 @@ export const adminChildRoutes = [
     iconKey: 'invoices',
     element: <AdminInvoicesPage />,
   },
-  {
-    path: 'posts',
-    key: 'posts',
-    label: 'Quản lý Bài Đăng',
-    iconKey: 'posts',
-    element: <AdminPostsPage />,
-  },
+  // {
+  //   path: 'posts',
+  //   key: 'posts',
+  //   label: 'Quản lý Bài Đăng',
+  //   iconKey: 'posts',
+  //   element: <AdminPostsPage />,
+  // },
   {
     path: 'profile',
     key: 'profile',

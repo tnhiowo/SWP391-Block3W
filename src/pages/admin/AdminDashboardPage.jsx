@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Row, Col, Card, Typography, Space, Statistic, theme, Table, Tag } from "antd";
+import { Row, Col, Card, Typography, Space, Statistic, theme, Table, Tag, message, Button } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -10,8 +10,18 @@ import {
 } from "@ant-design/icons";
 import { userApiService } from "../../services/userApiService";
 import { clubApiService } from "../../services/clubApiService";
+import { statisticsApiService } from "../../services/statisticsApiService";
+import ClubDetailModal from "../../components/ClubDetailModal";
 
 const { Title, Text } = Typography;
+
+// Helper function để format tiền VND
+const formatVnd = (amount) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount || 0);
+};
 
 const activityColumns = [
   {
@@ -69,6 +79,20 @@ export default function AdminDashboardPage() {
   const [totalClubs, setTotalClubs] = useState(0);
   const [loadingStats, setLoadingStats] = useState(false);
 
+  const [myClubsData, setMyClubsData] = useState([]);
+  const [loadingClubs, setLoadingClubs] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState(null);
+
+  const [dashboardStats, setDashboardStats] = useState({
+    pendingCount: 0,
+    totalClubs: 0,
+    todayRevenue: 0,
+    totalRevenue: 0,
+  });
+  const [loadingDashboard, setLoadingDashboard] = useState(false);
+
+  // Fetch số Users & CLB (tổng quan hệ thống)
   useEffect(() => {
     const fetchStats = async () => {
       setLoadingStats(true);
@@ -107,7 +131,120 @@ export default function AdminDashboardPage() {
     fetchStats();
   }, []);
 
-  const stats = useMemo(
+  // Fetch danh sách CLB của admin
+  useEffect(() => {
+    const fetchMyClubs = async () => {
+      setLoadingClubs(true);
+      try {
+        const response = await statisticsApiService.getMyClubsStatistics();
+
+        if (response?.success === false) {
+          const errorMsg = response?.message || "Không thể tải danh sách CLB";
+          message.error(errorMsg);
+          setMyClubsData([]);
+        } else if (response?.success === true && Array.isArray(response?.data)) {
+          setMyClubsData(response.data);
+        } else {
+          // Fallback: nếu response không có success field nhưng có data
+          if (Array.isArray(response?.data)) {
+            setMyClubsData(response.data);
+          } else {
+            setMyClubsData([]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load my clubs statistics", error);
+        const errorMsg = error?.message || "Có lỗi xảy ra khi tải danh sách CLB";
+        message.error(errorMsg);
+        setMyClubsData([]);
+      } finally {
+        setLoadingClubs(false);
+      }
+    };
+
+    fetchMyClubs();
+  }, []);
+
+  // Fetch thống kê dashboard (tài chính)
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      setLoadingDashboard(true);
+      try {
+        const response = await statisticsApiService.getDashboardStatistics();
+
+        if (response?.success === false) {
+          const errorMsg = response?.message || "Không tải được thống kê tài chính";
+          message.error(errorMsg);
+          setDashboardStats({
+            pendingCount: 0,
+            totalClubs: 0,
+            todayRevenue: 0,
+            totalRevenue: 0,
+          });
+        } else if (response?.success === true && response?.data) {
+          setDashboardStats(response.data);
+        } else if (response?.data) {
+          // Fallback nếu không có success field nhưng có data
+          setDashboardStats(response.data);
+        } else {
+          setDashboardStats({
+            pendingCount: 0,
+            totalClubs: 0,
+            todayRevenue: 0,
+            totalRevenue: 0,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard financial stats", error);
+        message.error("Không tải được thống kê tài chính");
+        setDashboardStats({
+          pendingCount: 0,
+          totalClubs: 0,
+          todayRevenue: 0,
+          totalRevenue: 0,
+        });
+      } finally {
+        setLoadingDashboard(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
+
+  const handleViewDetail = (clubId) => {
+    setSelectedClubId(clubId);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedClubId(null);
+  };
+
+  const clubsWithPendingCount = useMemo(
+    () => myClubsData.filter((club) => (club.pendingCount || 0) > 0).length,
+    [myClubsData]
+  );
+
+  const clubsNoRevenueCount = useMemo(
+    () => myClubsData.filter((club) => (club.totalRevenue || 0) === 0).length,
+    [myClubsData]
+  );
+
+  const lowCompletionClubsCount = useMemo(
+    () =>
+      myClubsData.filter((club) => {
+        const members = club.memberCount || 0;
+        const pending = club.pendingCount || 0;
+        if (!members) return false;
+        const completionRate = 1 - pending / members;
+        return completionRate * 100 < 50;
+      }).length,
+    [myClubsData]
+  );
+
+  // Action cards – tập trung vào chỉ số chính
+  const actionCards = useMemo(
     () => [
       {
         key: "users",
@@ -124,22 +261,21 @@ export default function AdminDashboardPage() {
         color: "#22c55e",
       },
       {
-        key: "pending",
-        label: "Yêu cầu chờ duyệt",
-        value: 7,
-        icon: <AuditOutlined />,
-        color: "#f59e0b",
+        key: "todayRevenue",
+        label: "Doanh thu hôm nay",
+        value: loadingDashboard ? "-" : formatVnd(dashboardStats.todayRevenue || 0),
+        icon: <DollarOutlined />,
+        color: "#22c55e",
       },
       {
-        key: "revenue",
-        label: "Doanh thu phí (mock)",
-        value: 15000000,
-        formatter: (v) => v.toLocaleString("vi-VN") + " VNĐ",
-        icon: <DollarOutlined />,
-        color: "#0ea5e9",
+        key: "totalRevenue",
+        label: "Tổng doanh thu",
+        value: loadingDashboard ? "-" : formatVnd(dashboardStats.totalRevenue || 0),
+        icon: <ArrowUpOutlined />,
+        color: "#6366f1",
       },
     ],
-    [loadingStats, totalUsers, totalClubs]
+    [loadingStats, totalUsers, totalClubs, loadingDashboard, dashboardStats]
   );
 
   return (
@@ -153,9 +289,9 @@ export default function AdminDashboardPage() {
         </Text>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Action Cards */}
       <Row gutter={[16, 16]}>
-        {stats.map((item) => (
+        {actionCards.map((item) => (
           <Col xs={24} sm={12} lg={6} key={item.key}>
             <Card
               bordered={false}
@@ -181,34 +317,10 @@ export default function AdminDashboardPage() {
                   >
                     {item.icon}
                   </div>
-                  {item.change && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        color: item.changeType === "up" ? "#22C55E" : "#EF4444",
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {item.changeType === "up" ? (
-                        <ArrowUpOutlined />
-                      ) : (
-                        <ArrowDownOutlined />
-                      )}
-                      {item.change}%
-                    </div>
-                  )}
                 </div>
                 <div>
                   <Statistic
                     value={item.value}
-                    valueRender={(val) =>
-                      typeof item.formatter === "function"
-                        ? item.formatter(item.value)
-                        : val
-                    }
                     title={
                       <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>
                         {item.label}
@@ -228,35 +340,109 @@ export default function AdminDashboardPage() {
         ))}
       </Row>
 
-      {/* Charts Placeholder */}
+      {/* Danh sách CLB của Admin */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <Card
-            title="Biểu đồ hoạt động"
+            title="Danh sách CLB của bạn"
             bordered={false}
             style={{
               borderRadius: 12,
               boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
             }}
           >
-            <div
-              style={{
-                height: 300,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: token.colorBgLayout,
-                borderRadius: 8,
-                color: token.colorTextSecondary,
+            <Table
+              columns={[
+                {
+                  title: "CLB",
+                  dataIndex: "clubName",
+                  key: "clubName",
+                  render: (text) => (
+                    <Text strong style={{ fontSize: 14, whiteSpace: "normal" }}>
+                      {text}
+                    </Text>
+                  ),
+                },
+                {
+                  title: "Thành viên",
+                  dataIndex: "memberCount",
+                  key: "memberCount",
+                  align: "center",
+                  width: 120,
+                },
+                {
+                  title: "Phí áp dụng",
+                  dataIndex: "activeFeeCount",
+                  key: "activeFeeCount",
+                  align: "center",
+                  width: 100,
+                },
+                {
+                  title: "Chờ thanh toán",
+                  dataIndex: "pendingCount",
+                  key: "pendingCount",
+                  align: "center",
+                  width: 130,
+                  render: (count) => {
+                    if (count > 0) {
+                      return <Tag color="warning">{count}</Tag>;
+                    }
+                    return <Text type="secondary">0</Text>;
+                  },
+                },
+                {
+                  title: "Chi tiết doanh thu",
+                  key: "viewDetail",
+                  align: "center",
+                  width: 160,
+                  render: (_, record) => (
+                    <Button type="link" onClick={() => handleViewDetail(record.clubId)}>
+                      Xem chi tiết
+                    </Button>
+                  ),
+                },
+                {
+                  title: "Doanh thu",
+                  dataIndex: "totalRevenue",
+                  key: "totalRevenue",
+                  align: "right",
+                  width: 120,
+                  render: (amount) => (
+                    <Text style={{ fontWeight: 500 }}>{formatVnd(amount)}</Text>
+                  ),
+                },
+              ]}
+              dataSource={myClubsData}
+              loading={loadingClubs}
+              rowKey="clubId"
+              onRow={(record) => {
+                const hasPending = (record.pendingCount || 0) > 0;
+                const noRevenue = (record.totalRevenue || 0) === 0;
+
+                return {
+                  style: {
+                    backgroundColor: hasPending ? "rgba(245, 158, 11, 0.06)" : undefined,
+                    opacity: !hasPending && noRevenue ? 0.75 : 1,
+                  },
+                };
               }}
-            >
-              <Text type="secondary">Biểu đồ sẽ được tích hợp sau</Text>
-            </div>
+              pagination={{
+                pageSize: 5,
+                showSizeChanger: false,
+                showTotal: (total) => `Tổng ${total} CLB`,
+              }}
+              locale={{
+                emptyText: "Chưa có dữ liệu CLB",
+              }}
+              size="middle"
+            />
           </Card>
         </Col>
+
+        {/* Cảnh báo & Insight */}
         <Col xs={24} lg={8}>
           <Card
-            title="Thống kê nhanh"
+            title="Cảnh báo & Insight"
             bordered={false}
             style={{
               borderRadius: 12,
@@ -265,35 +451,49 @@ export default function AdminDashboardPage() {
           >
             <Space direction="vertical" size={16} style={{ width: "100%" }}>
               <div>
+                <Text strong style={{ fontSize: 14 }}>Tổng quan rủi ro</Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  Thành viên mới hôm nay
+                  Những điểm cần chú ý liên quan đến phí và thanh toán.
                 </Text>
-                <div style={{ fontSize: 24, fontWeight: 700, color: token.colorText }}>
-                  8
-                </div>
               </div>
+
               <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  CLB mới trong tháng
-                </Text>
-                <div style={{ fontSize: 24, fontWeight: 700, color: token.colorText }}>
-                  2
-                </div>
+                <Space align="start" size={8}>
+                  <span style={{ color: "#f97316", fontSize: 16 }}>•</span>
+                  <Text style={{ fontSize: 13 }}>
+                    <Text strong>
+                      {loadingDashboard ? "-" : dashboardStats.pendingCount ?? 0} khoản phí
+                    </Text>{" "}
+                    đang chờ thanh toán.
+                  </Text>
+                </Space>
               </div>
+
               <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Doanh thu hôm nay
-                </Text>
-                <div style={{ fontSize: 24, fontWeight: 700, color: "#22C55E" }}>
-                  2.5M VNĐ
-                </div>
+                <Space align="start" size={8}>
+                  <span style={{ color: "#f97316", fontSize: 16 }}>•</span>
+                  <Text style={{ fontSize: 13 }}>
+                    <Text strong>{clubsNoRevenueCount} CLB</Text>{" "}
+                    chưa thu được bất kỳ khoản phí nào.
+                  </Text>
+                </Space>
+              </div>
+
+              <div>
+                <Space align="start" size={8}>
+                  <span style={{ color: "#f97316", fontSize: 16 }}>•</span>
+                  <Text style={{ fontSize: 13 }}>
+                    <Text strong>{lowCompletionClubsCount} CLB</Text>{" "}
+                    có tỷ lệ hoàn thành phí ước tính dưới 50%.
+                  </Text>
+                </Space>
               </div>
             </Space>
           </Card>
         </Col>
       </Row>
 
-      {/* Recent Activities */}
+      {/* Hoạt động gần đây */}
       <Card
         title="Hoạt động gần đây"
         bordered={false}
@@ -309,6 +509,9 @@ export default function AdminDashboardPage() {
           size="middle"
         />
       </Card>
+
+      {/* Modal chi tiết CLB */}
+      <ClubDetailModal open={isDetailModalOpen} onClose={handleCloseModal} clubId={selectedClubId} />
     </Space>
   );
 }
