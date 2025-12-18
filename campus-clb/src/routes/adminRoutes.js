@@ -31,13 +31,13 @@ export const adminChildRoutes = [
     iconKey: 'clubs',
     element: <AdminClubsPage />,
   },
-  {
-    path: 'invoices',
-    key: 'invoices',
-    label: 'Hóa đơn / Phí',
-    iconKey: 'invoices',
-    element: <AdminInvoicesPage />,
-  },
+  // {
+  //   path: 'invoices',
+  //   key: 'invoices',
+  //   label: 'Hóa đơn / Phí',
+  //   iconKey: 'invoices',
+  //   element: <AdminInvoicesPage />,
+  // },
   // {
   //   path: 'posts',
   //   key: 'posts',
