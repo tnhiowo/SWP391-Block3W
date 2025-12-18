@@ -3,6 +3,10 @@ import StudentLayout from "../layouts/student/StudentLayout";
 import StudentDashboardPage from "../pages/students/StudentDashboardPage";
 import PublicClubsPage from "../pages/students/PublicClubsPage";
 import ClubDetailPage from "../pages/students/ClubDetailPage";
+import ProfilePage from "../pages/general/ProfilePage";
+import StudentFeePage from "../pages/students/StudentFeePage";
+import PaymentStatusPage from "../pages/general/PaymentStatusPage";
+import NotificationStudentManagementPage from "../pages/students/NotificationStudentManagementPage";
 
 
 export const studentChildRoutes = [
@@ -29,21 +33,28 @@ export const studentChildRoutes = [
         element: <ClubDetailPage />,
         showInSidebar: false,
     },
+    {
+        path: "fund",
+        key: "fund",
+        label: "Quỹ",
+        iconKey: "events",
+        element: <StudentFeePage />,
+    },
     // {
-    //     path: "events",
-    //     key: "events",
-    //     label: "Sự kiện",
-    //     iconKey: "events",
-    //     element: <StudentEventsPage />,
+    //     path: "notifications",
+    //     key: "notifications",
+    //     label: "Thông báo",
+    //     iconKey: "notifications",
+    //     element: <NotificationStudentManagementPage />,
     // },
-    // {
-    //     path: "profile",
-    //     key: "profile",
-    //     label: "Hồ sơ cá nhân",
-    //     iconKey: "profile",
-    //     showInSidebar: false,
-    //     element: <StudentProfilePage />,
-    // },
+    {
+        path: "profile",
+        key: "profile",
+        label: "Hồ sơ cá nhân",
+        iconKey: "profile",
+        showInSidebar: false,
+        element: <ProfilePage />,
+    },
 ];
 
 const studentRoutes = [

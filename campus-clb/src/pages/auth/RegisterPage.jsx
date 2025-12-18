@@ -1,37 +1,38 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './RegisterPage.css';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+
+import "./RegisterPage.css";
+import { authApiService } from "../../services/authApiService";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    studentCode: '',
-    password: '',
-    confirmPassword: '',
-    role: 'Student',
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    role: "Student",
     agreeToTerms: false,
   });
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
-    // Clear error when user starts typing
+
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-    setSubmitSuccess(false);
   };
 
   const validateEmail = (email) => {
@@ -43,55 +44,85 @@ const RegisterPage = () => {
     const newErrors = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập họ và tên';
+      newErrors.fullName = "Vui lòng nhập họ và tên";
     }
-
     if (!formData.email.trim()) {
-      newErrors.email = 'Vui lòng nhập email';
+      newErrors.email = "Vui lòng nhập email";
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
+      newErrors.email = "Email không hợp lệ";
     }
-
-    if (!formData.studentCode.trim()) {
-      newErrors.studentCode = 'Vui lòng nhập mã sinh viên';
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Vui lòng nhập số điện thoại";
     }
-
     if (!formData.password) {
-      newErrors.password = 'Vui lòng nhập mật khẩu';
+      newErrors.password = "Vui lòng nhập mật khẩu";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
     }
-
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
     }
-
     if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = 'Vui lòng đồng ý với điều khoản sử dụng';
+      newErrors.agreeToTerms = "Vui lòng đồng ý điều khoản sử dụng";
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitSuccess(false);
+    setErrors({});
 
-    if (validateForm()) {
-      const submitData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        studentCode: formData.studentCode,
-        role: formData.role,
-        password: formData.password,
-      };
+    if (!validateForm()) return;
 
-      console.log('Register data:', submitData);
-      // TODO: call register API
-      setSubmitSuccess(true);
+    setIsLoading(true);
+
+    const submitData = {
+      fullName: formData.fullName.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      password: formData.password,
+      role: formData.role,
+    };
+
+    try {
+      const response = await authApiService.register(submitData);
+
+      if (response.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Đăng ký thành công!",
+          text: "Bạn sẽ được chuyển đến trang đăng nhập.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Đăng ký thất bại",
+          text: response.message || "Vui lòng thử lại.",
+        });
+
+        if (response.errors) {
+          setErrors(response.errors);
+        }
+      }
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi hệ thống",
+        text: err.message || "Không thể xử lý yêu cầu.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -104,17 +135,13 @@ const RegisterPage = () => {
               <div className="register-badge">CÂU LẠC BỘ</div>
               <h1 className="register-title">Đăng ký tài khoản</h1>
               <p className="register-description">
-                Tạo tài khoản để tham gia và quản lý các câu lạc bộ trong campus.
+                Tạo tài khoản để tham gia và quản lý các câu lạc bộ trong
+                campus.
               </p>
             </div>
 
-            {submitSuccess && (
-              <div className="success-message">
-                Đăng ký demo thành công (chưa gọi API)
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="register-form" noValidate>
+              {/* Họ và tên */}
               <div className="form-group">
                 <label htmlFor="fullName" className="form-label">
                   Họ và tên
@@ -125,14 +152,16 @@ const RegisterPage = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  className={`form-input ${errors.fullName ? 'error' : ''}`}
+                  className={`form-input ${errors.fullName ? "error" : ""}`}
                   placeholder="Nhập họ và tên"
+                  disabled={isLoading}
                 />
                 {errors.fullName && (
                   <span className="error-message">{errors.fullName}</span>
                 )}
               </div>
 
+              {/* Email */}
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   Email
@@ -143,52 +172,58 @@ const RegisterPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`form-input ${errors.email ? 'error' : ''}`}
+                  className={`form-input ${errors.email ? "error" : ""}`}
                   placeholder="Nhập email"
+                  disabled={isLoading}
                 />
                 {errors.email && (
                   <span className="error-message">{errors.email}</span>
                 )}
               </div>
 
+              {/* Số điện thoại */}
               <div className="form-group">
-                <label htmlFor="studentCode" className="form-label">
-                  Mã sinh viên
+                <label htmlFor="phone" className="form-label">
+                  Số điện thoại
                 </label>
                 <input
                   type="text"
-                  id="studentCode"
-                  name="studentCode"
-                  value={formData.studentCode}
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleChange}
-                  className={`form-input ${errors.studentCode ? 'error' : ''}`}
-                  placeholder="Nhập mã sinh viên"
+                  className={`form-input ${errors.phone ? "error" : ""}`}
+                  placeholder="Nhập số điện thoại"
+                  disabled={isLoading}
                 />
-                {errors.studentCode && (
-                  <span className="error-message">{errors.studentCode}</span>
+                {errors.phone && (
+                  <span className="error-message">{errors.phone}</span>
                 )}
               </div>
 
+              {/* Mật khẩu */}
               <div className="form-group">
                 <label htmlFor="password" className="form-label">
                   Mật khẩu
                 </label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`form-input ${errors.password ? 'error' : ''}`}
+                    className={`form-input ${errors.password ? "error" : ""}`}
                     placeholder="Nhập mật khẩu"
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
                   >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                    {showPassword ? "👁️" : "👁️‍🗨️"}
                   </button>
                 </div>
                 {errors.password && (
@@ -196,34 +231,41 @@ const RegisterPage = () => {
                 )}
               </div>
 
+              {/* Xác nhận mật khẩu */}
               <div className="form-group">
                 <label htmlFor="confirmPassword" className="form-label">
                   Xác nhận mật khẩu
                 </label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                    className={`form-input ${
+                      errors.confirmPassword ? "error" : ""
+                    }`}
                     placeholder="Nhập lại mật khẩu"
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={isLoading}
                   >
-                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                    {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <span className="error-message">{errors.confirmPassword}</span>
+                  <span className="error-message">
+                    {errors.confirmPassword}
+                  </span>
                 )}
               </div>
 
-
+              {/* Điều khoản */}
               <div className="form-group">
                 <label className="checkbox-label">
                   <input
@@ -232,6 +274,7 @@ const RegisterPage = () => {
                     checked={formData.agreeToTerms}
                     onChange={handleChange}
                     className="checkbox-input"
+                    disabled={isLoading}
                   />
                   <span className="checkbox-text">
                     Tôi đồng ý với điều khoản sử dụng
@@ -242,8 +285,12 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              <button type="submit" className="register-button">
-                Đăng ký
+              <button
+                type="submit"
+                className="register-button"
+                disabled={isLoading}
+              >
+                {isLoading ? "Đang xử lý..." : "Đăng ký"}
               </button>
 
               <div className="register-footer">
@@ -261,8 +308,8 @@ const RegisterPage = () => {
                 Quản lý hoạt động câu lạc bộ trong một nền tảng.
               </h2>
               <p className="register-info-description">
-                Theo dõi sự kiện, đăng ký tham gia CLB, quản lý thành viên và báo cáo thu chi
-                một cách trực quan, tập trung.
+                Theo dõi sự kiện, đăng ký CLB, quản lý thành viên và báo cáo thu
+                chi dễ dàng.
               </p>
             </div>
           </div>
@@ -273,4 +320,3 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
-

@@ -3,6 +3,10 @@ import ClubLeaderLayout from "../layouts/leader/ClubLeaderLayout";
 import ClubLeaderDashboardPage from "../pages/leaders/ClubLeaderDashboardPage";
 import MyClubsManagementPage from "../pages/leaders/MyClubsManagementPage";
 import ClubMembersPage from "../pages/leaders/ClubMembersPage";
+import ProfilePage from "../pages/general/ProfilePage";
+import ClubLeaderFeeManagementPage from "../pages/leaders/ClubLeaderFeeManagementPage";
+import ClubLeaderFeePage from "../pages/leaders/ClubLeaderFeePage";
+import NotificationManagementPage from "../pages/general/NotificationManagementPage";
 
 export const clubLeaderChildRoutes = [
     {
@@ -20,7 +24,6 @@ export const clubLeaderChildRoutes = [
         iconKey: "members",
         element: <MyClubsManagementPage />,
     },
-
     {
         path: "club/:clubId/members",
         key: "club-members",
@@ -28,22 +31,36 @@ export const clubLeaderChildRoutes = [
         element: <ClubMembersPage />,
         showInSidebar: false,
     },
-
+    {
+        path: "fund/:clubId",
+        key: "fund",
+        label: "Quản lý quỹ",
+        iconKey: "events",
+        element: <ClubLeaderFeeManagementPage />,
+        showInSidebar: false,
+    },
     // {
-    //     path: "events",
-    //     key: "events",
-    //     label: "Quản lý sự kiện",
+    //     path: "fund",
+    //     key: "fund",
+    //     label: "Quỹ",
     //     iconKey: "events",
-    //     element: <ClubLeaderEventsPage />,
+    //     element: <ClubLeaderFeePage />,
     // },
     // {
-    //     path: "profile",
-    //     key: "profile",
-    //     label: "Hồ sơ",
-    //     iconKey: "profile",
-    //     showInSidebar: false,
-    //     element: <ClubLeaderProfilePage />,
+    //     path: "notifications",
+    //     key: "notifications",
+    //     label: "Thông báo",
+    //     iconKey: "notifications",
+    //     element: <NotificationManagementPage />,
     // },
+    {
+        path: "profile",
+        key: "profile",
+        label: "Hồ sơ",
+        iconKey: "profile",
+        showInSidebar: false,
+        element: <ProfilePage />,
+    },
 ];
 
 const clubLeaderRoutes = [

@@ -10,7 +10,7 @@ export const clubMemberApiService = {
     leaveClub: (clubId) =>
         apiCall("/club-members/leave",{
             method: "POST",
-            body: JSON.stringify(clubId),
+            body: JSON.stringify({ clubId: clubId }),
         }),
 
     cancelRequest: (clubId) =>

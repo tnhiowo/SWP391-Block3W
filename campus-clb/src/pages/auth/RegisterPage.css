@@ -148,6 +148,7 @@
   color: #ff4d4f;
   font-size: 12px;
   margin-top: 4px;
+  margin-bottom: 5px;
   display: block;
 }
 
@@ -235,16 +236,12 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-      circle at top left,
+  background: radial-gradient(circle at top left,
       rgba(255, 255, 255, 0.18),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at bottom right,
+      transparent 55%),
+    radial-gradient(circle at bottom right,
       rgba(59, 130, 246, 0.25),
-      transparent 55%
-    );
+      transparent 55%);
   z-index: 0;
 }
 
@@ -308,4 +305,3 @@
     font-size: 24px;
   }
 }
-

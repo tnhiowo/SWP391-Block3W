@@ -220,7 +220,7 @@ export default function ClubMembersPage() {
       },
       {
         title: "Ngày gửi",
-        dataIndex: "joinedDate",
+        dataIndex: "requestedAt",
         render: (d) => new Date(d).toLocaleDateString("vi-VN"),
         width: 140,
       },
@@ -338,7 +338,7 @@ export default function ClubMembersPage() {
               {selectedMember.contactInfoOptional || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Ngày tham gia/gửi">
-              {new Date(selectedMember.joinedDate).toLocaleString("vi-VN")}
+              {new Date(selectedMember.requestedAt).toLocaleString("vi-VN")}
             </Descriptions.Item>
             <Descriptions.Item label="Vai trò">
               <Tag
@@ -357,7 +357,7 @@ export default function ClubMembersPage() {
               <Popconfirm
                 title="Duyệt thành viên này?"
                 onConfirm={() => {
-                  handleApprove(selectedMember.memberId);
+                  handleApprove(selectedMember.requestId);
                   setIsModalOpen(false);
                 }}
                 okText="Duyệt"

@@ -3,14 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, Checkbox, Input, Typography, Card, Row, Col } from "antd";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import styled from "styled-components";
+import Swal from "sweetalert2";
 import { useAuth } from "../../contexts/AuthContext";
-import { useToast } from "../../components/ToastManager";
 
 const LoginPage = ({ role }) => {
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const { login } = useAuth();
-  const { success, error } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -28,18 +27,31 @@ const LoginPage = ({ role }) => {
     try {
       const res = await login({ Email: email, Password: password });
 
-      success("Đăng nhập thành công!");
+      Swal.fire({
+        icon: "success",
+        title: "Đăng nhập thành công!",
+        timer: 1500,
+        showConfirmButton: false,
+      });
 
       const userRole = res.data.role;
-      if (userRole === "Admin") {
-        navigate("/admin");
-      } else if (userRole === "Student") {
-        navigate("/student");
-      } else {
-        navigate("/club-leader");
-      }
+
+      setTimeout(() => {
+        if (userRole === "Admin") {
+          navigate("/admin");
+        } else if (userRole === "Student") {
+          navigate("/student");
+        } else {
+          navigate("/club-leader");
+        }
+      }, 700);
     } catch (err) {
-      error("Đăng nhập thất bại. Vui lòng thử lại.");
+      Swal.fire({
+        icon: "error",
+        title: "Đăng nhập thất bại",
+        text: "Email hoặc mật khẩu không chính xác!",
+      });
+
       console.error("Login error:", err);
     }
   };
@@ -118,11 +130,13 @@ const LoginPage = ({ role }) => {
                   </Typography.Text>
                 </div>
 
+                {/* FORM */}
                 <form
                   noValidate
                   onSubmit={handleSubmit}
                   style={{ marginTop: 8 }}
                 >
+                  {/* Email */}
                   <div style={{ marginBottom: 12 }}>
                     <label
                       htmlFor="email"
@@ -152,6 +166,7 @@ const LoginPage = ({ role }) => {
                     )}
                   </div>
 
+                  {/* Password */}
                   <div style={{ marginBottom: 8 }}>
                     <label
                       htmlFor="password"
@@ -182,6 +197,7 @@ const LoginPage = ({ role }) => {
                     )}
                   </div>
 
+                  {/* Remember + Forgot */}
                   <div
                     style={{
                       marginTop: 8,
@@ -204,6 +220,7 @@ const LoginPage = ({ role }) => {
                     </StyledLink>
                   </div>
 
+                  {/* Submit */}
                   <Button
                     htmlType="submit"
                     type="primary"
@@ -219,6 +236,23 @@ const LoginPage = ({ role }) => {
                     Đăng nhập
                   </Button>
 
+                  {/* NEW: Register Button */}
+                  <div
+                    style={{
+                      marginTop: 16,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Typography.Text type="secondary">
+                      Chưa có tài khoản?
+                    </Typography.Text>
+                    <StyledLink to="/register">Đăng ký ngay</StyledLink>
+                  </div>
+
+                  {/* Admin Register */}
                   {role === "Admin" && (
                     <div
                       style={{
@@ -242,6 +276,7 @@ const LoginPage = ({ role }) => {
             </Card>
           </Col>
 
+          {/* Right section */}
           <Col
             xs={0}
             md={14}

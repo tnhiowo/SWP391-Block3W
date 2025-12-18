@@ -6,7 +6,7 @@ export const authApiService = {
         body: JSON.stringify(data),
     }),
 
-    activate: (email,token) => apiCall(`/auth/activate?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`,{
+    activate: (email,token) => apiCall(`/auth/activate?email=${email}&token=${encodeURIComponent(token)}`,{
         method: "GET",
     }),
 

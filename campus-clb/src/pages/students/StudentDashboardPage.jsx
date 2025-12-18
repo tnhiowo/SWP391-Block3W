@@ -1,120 +1,291 @@
-import React from "react";
-import { Row, Col, Card, Typography, Space, Statistic, theme } from "antd";
+import { useEffect, useState } from "react";
 import {
-  ScheduleOutlined,
-  CheckCircleOutlined,
+  Avatar,
+  Card,
+  Col,
+  List,
+  Row,
+  Skeleton,
+  Space,
+  Statistic,
+  Tag,
+  Typography,
+  message,
+  DatePicker,
+  Segmented,
+} from "antd";
+import {
+  TeamOutlined,
+  FileTextOutlined,
+  DollarCircleOutlined,
   ClockCircleOutlined,
-  DollarOutlined,
 } from "@ant-design/icons";
+import dayjs from "dayjs";
+
+import { statisticsApiService } from "../../services/statisticsApiService";
+import { useAuth } from "../../contexts/AuthContext";
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
-const stats = [
-  {
-    key: "registered",
-    label: "Số CLB đã đăng ký",
-    value: 3,
-    icon: <ScheduleOutlined />,
-    color: "#3b82f6",
-  },
-  {
-    key: "approved",
-    label: "CLB đã duyệt",
-    value: 2,
-    icon: <CheckCircleOutlined />,
-    color: "#22c55e",
-  },
-  {
-    key: "pending",
-    label: "Đang chờ duyệt",
-    value: 1,
-    icon: <ClockCircleOutlined />,
-    color: "#f59e0b",
-  },
-  {
-    key: "fee",
-    label: "Tổng phí đã đóng (mock)",
-    value: 350000,
-    formatter: (v) => v.toLocaleString("vi-VN") + " VNĐ",
-    icon: <DollarOutlined />,
-    color: "#8b5cf6",
-  },
-];
+const StudentStatisticsPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [dateRange, setDateRange] = useState("7days");
+  const { user } = useAuth();
+  const [customRange, setCustomRange] = useState([
+    dayjs().subtract(6, "day"),
+    dayjs(),
+  ]);
 
-export default function StudentDashboardPage() {
-  const { token } = theme.useToken();
+  const getDateRange = () => {
+    switch (dateRange) {
+      case "7days":
+        return {
+          start: dayjs().subtract(6, "day").startOf("day"),
+          end: dayjs().endOf("day"),
+        };
+      case "30days":
+        return {
+          start: dayjs().subtract(29, "day").startOf("day"),
+          end: dayjs().endOf("day"),
+        };
+      case "all":
+        return null;
+      case "custom":
+        if (customRange[0] && customRange[1]) {
+          return {
+            start: customRange[0].startOf("day"),
+            end: customRange[1].endOf("day"),
+          };
+        }
+        return null;
+      default:
+        return {
+          start: dayjs().subtract(6, "day").startOf("day"),
+          end: dayjs().endOf("day"),
+        };
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await statisticsApiService.getMyOverview();
+
+        if (response.success) {
+          const raw = response.data;
+
+          const range = getDateRange();
+          let filteredClubs = raw.clubs || [];
+
+          // Lọc theo thời gian tham gia
+          if (range) {
+            const start = range.start.toDate();
+            const end = range.end.toDate();
+
+            filteredClubs = filteredClubs.filter((club) => {
+              if (!club.joinedAt) return false;
+              const joinDate = new Date(club.joinedAt);
+              return joinDate >= start && joinDate <= end;
+            });
+          }
+
+          setData({
+            totalClubsJoined: filteredClubs.length,
+            totalPostsCreated: raw.totalPostsCreated || 0,
+            totalFeesPaid: raw.totalFeesPaid || 0,
+            totalFeesPending: raw.totalFeesPending || 0,
+            clubs: filteredClubs,
+          });
+        } else {
+          message.error(response.message || "Không thể tải thống kê");
+        }
+      } catch (err) {
+        message.error("Lỗi kết nối server");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [dateRange, customRange]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: "40px 20px", maxWidth: 1200, margin: "0 auto" }}>
+        <Skeleton active avatar paragraph={{ rows: 8 }} />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div style={{ textAlign: "center", padding: "80px 20px" }}>
+        <Text type="secondary" style={{ fontSize: 16 }}>
+          Không có dữ liệu thống kê để hiển thị.
+        </Text>
+      </div>
+    );
+  }
 
   return (
-    <div
-      style={{
-        padding: 24,
-        minHeight: "100%",
-        background: token.colorBgLayout,
-      }}
-    >
-      <Space direction="vertical" size={24} style={{ width: "100%" }}>
-        <div>
-          <Title level={3} style={{ marginBottom: 4 }}>
-            Bảng điều khiển Student
-          </Title>
-          <Text type="secondary">
-            Tổng quan nhanh về hoạt động đăng ký câu lạc bộ.
-          </Text>
-        </div>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 16px" }}>
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <Space align="center" size={20}>
+          <Avatar size={90} style={{ background: "#7f56da", fontSize: 40 }}>
+            {user?.fullName?.charAt(0).toUpperCase() || "S"}
+          </Avatar>
+          <div style={{ textAlign: "left" }}>
+            <Title level={2} style={{ margin: 0, color: "#1a1a1a" }}>
+              Thống kê hoạt động
+            </Title>
+            <Text type="secondary" style={{ fontSize: 16 }}>
+              {user?.fullName} • {user?.email}
+            </Text>
+          </div>
+        </Space>
+      </div>
 
-        <Row gutter={[16, 16]}>
-          {stats.map((item) => (
-            <Col xs={24} sm={12} md={12} lg={6} key={item.key}>
-              <Card
-                bordered={false}
+      {/* Summary Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} hoverable>
+            <Statistic
+              title="CLB đã tham gia"
+              value={data.totalClubsJoined}
+              prefix={<TeamOutlined style={{ color: "#7f56da" }} />}
+              valueStyle={{ color: "#7f56da", fontSize: 28 }}
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} hoverable>
+            <Statistic
+              title="Bài đăng đã tạo"
+              value={data.totalPostsCreated}
+              prefix={<FileTextOutlined style={{ color: "#1890ff" }} />}
+              valueStyle={{ color: "#1890ff", fontSize: 28 }}
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} hoverable>
+            <Statistic
+              title="Phí đã đóng"
+              value={data.totalFeesPaid}
+              prefix={<DollarCircleOutlined style={{ color: "#52c41a" }} />}
+              suffix="đ"
+              valueStyle={{ color: "#52c41a", fontSize: 28 }}
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} hoverable>
+            <Statistic
+              title="Phí đang chờ"
+              value={data.totalFeesPending}
+              prefix={<ClockCircleOutlined style={{ color: "#fa8c16" }} />}
+              valueStyle={{ color: "#fa8c16", fontSize: 28 }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Danh sách CLB */}
+      <Card
+        title={
+          <Space>
+            <TeamOutlined style={{ color: "#7f56da" }} />
+            <Text strong>
+              Các CLB đã tham gia
+              {dateRange === "7days" && " (7 ngày gần nhất)"}
+              {dateRange === "30days" && " (30 ngày gần nhất)"}
+              {dateRange === "custom" && " (khoảng tùy chỉnh)"}
+              {dateRange === "all" && " (toàn bộ thời gian)"}
+            </Text>
+          </Space>
+        }
+        style={{ borderRadius: 12 }}
+      >
+        {data.clubs.length > 0 ? (
+          <List
+            itemLayout="horizontal"
+            dataSource={data.clubs}
+            renderItem={(club) => (
+              <List.Item
                 style={{
-                  height: "100%",
-                  borderRadius: 16,
-                  boxShadow: "0 18px 40px rgba(15, 23, 42, 0.18)",
-                  background: token.colorBgContainer,
+                  padding: "16px 0",
+                  borderBottom: "1px solid #f0f0f0",
                 }}
               >
-                <Space align="start">
-                  <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 16,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 22,
-                      backgroundColor: `${item.color}1a`,
-                      color: item.color,
-                    }}
-                  >
-                    {item.icon}
-                  </div>
-
-                  <Statistic
-                    value={item.value}
-                    valueRender={(val) =>
-                      typeof item.formatter === "function"
-                        ? item.formatter(item.value)
-                        : val
-                    }
-                    title={
-                      <Text type="secondary" style={{ fontSize: 13 }}>
-                        {item.label}
+                <List.Item.Meta
+                  avatar={
+                    <Avatar
+                      style={{ background: "#7f56da", fontWeight: "bold" }}
+                      size={48}
+                    >
+                      {club.clubName.charAt(0).toUpperCase()}
+                    </Avatar>
+                  }
+                  title={
+                    <Space align="center">
+                      <Text strong style={{ fontSize: 16 }}>
+                        {club.clubName}
                       </Text>
-                    }
-                    valueStyle={{
-                      fontSize: 24,
-                      fontWeight: 700,
-                      color: token.colorText,
-                    }}
-                  />
-                </Space>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Space>
+                      <Tag color="purple">{club.memberCount} thành viên</Tag>
+                      <Tag color="blue">{club.postCount} bài đăng</Tag>
+                    </Space>
+                  }
+                  description={
+                    <Space direction="vertical" size={2}>
+                      <Text type="secondary">
+                        {club.description || "Chưa có mô tả"}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: 13 }}>
+                        Tham gia:{" "}
+                        {club.joinedAt
+                          ? new Date(club.joinedAt).toLocaleDateString(
+                              "vi-VN",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )
+                          : "Không rõ"}
+                      </Text>
+                    </Space>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        ) : (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <Text type="secondary" style={{ fontSize: 16 }}>
+              {dateRange === "all"
+                ? "Bạn chưa tham gia câu lạc bộ nào."
+                : "Không có hoạt động trong khoảng thời gian này."}
+            </Text>
+          </div>
+        )}
+      </Card>
+
+      {/* Footer */}
+      <div style={{ textAlign: "center", marginTop: 48, color: "#8c8c8c" }}>
+        <Text type="secondary">
+          Dữ liệu được cập nhật tự động từ hệ thống quản lý CLB
+        </Text>
+      </div>
     </div>
   );
-}
+};
+
+export default StudentStatisticsPage;

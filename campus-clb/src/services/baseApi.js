@@ -10,28 +10,64 @@ export const apiCall = async (endpoint,options = {}) => {
     if (token) {
         headers["Authorization"] = `Bearer ${token}`;
     }
+
+    const method = options.method || "GET";
+    const url = new URL(`${API_BASE_URL}${endpoint}`);
+
+    if (["GET","DELETE","HEAD","OPTIONS"].includes(method.toUpperCase()) && options.params) {
+        if (typeof options.params !== 'object' || options.params === null) {
+            console.warn('Invalid params object:',options.params); 
+        } else {
+            Object.entries(options.params).forEach(([key,value]) => {
+                if (value !== undefined && value !== null) {
+                    url.searchParams.append(key,value.toString());
+                }
+            });
+
+        }
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(),options.timeout || 30000);
+
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`,{
-            ...options,
+        const response = await fetch(url.toString(),{
+            method,
             headers,
+            body: method !== "GET" && options.body ? options.body : undefined,
+            signal: controller.signal,
+            ...options, 
         });
+
+        clearTimeout(timeoutId);
+
         let data = {};
         const contentType = response.headers.get("content-type");
         if (contentType?.includes("application/json")) {
             data = await response.json();
+        } else if (contentType?.includes("text/")) {
+            data = await response.text(); 
+        } else {
+            data = await response.blob(); 
         }
+
         if (!response.ok) {
-            const message = data.Message ?? data.message ?? `HTTP ${response.status}`;
+            const message = data.Message ?? data.message ?? data ?? `HTTP ${response.status}`;
             const err = new Error(message);
             err.statusCode = data.StatusCode ?? response.status;
             err.status = data.Status ?? "Error";
             err.errors = data.Errors ?? null;
             throw err;
         }
+
         return data;
-    } catch (networkErr) {
-        const err = new Error(networkErr.message || "Không thể kết nối máy chủ");
-        err.statusCode = 0;
-        throw err;
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            throw new Error('Request timeout');
+        }
+        const networkErr = new Error(err.message || "Không thể kết nối máy chủ");
+        networkErr.statusCode = 0;
+        throw networkErr;
     }
 };
