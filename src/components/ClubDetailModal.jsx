@@ -219,3 +219,7 @@ const ClubDetailModal = ({ open, onClose, clubId }) => {
 
 export default ClubDetailModal;
 
+
+
+
+
