@@ -1,5 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Row, Col, Card, Typography, Space, Statistic, theme, Table, Tag, message, Button } from "antd";
+import {
+  Row,
+  Col,
+  Card,
+  Typography,
+  Space,
+  Statistic,
+  theme,
+  Table,
+  Tag,
+  message,
+  Button,
+} from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -52,27 +64,6 @@ const activityColumns = [
   },
 ];
 
-const recentActivities = [
-  {
-    key: 1,
-    time: "Hôm nay, 09:15",
-    type: "USER",
-    description: "User mới đăng ký tài khoản",
-  },
-  {
-    key: 2,
-    time: "Hôm nay, 08:40",
-    type: "CLB",
-    description: "CLB mới được tạo bởi Leader",
-  },
-  {
-    key: 3,
-    time: "Hôm qua, 16:20",
-    type: "FEE",
-    description: "Sinh viên thanh toán phí CLB Lập trình",
-  },
-];
-
 export default function AdminDashboardPage() {
   const { token } = theme.useToken();
   const [totalUsers, setTotalUsers] = useState(0);
@@ -102,7 +93,8 @@ export default function AdminDashboardPage() {
           clubApiService.getAllClubs({ PageNumber: 1, PageSize: 1 }),
         ]);
 
-        const usersOk = usersResponse?.Success ?? usersResponse?.success ?? true;
+        const usersOk =
+          usersResponse?.Success ?? usersResponse?.success ?? true;
         if (usersOk) {
           setTotalUsers(
             usersResponse?.TotalCount ??
@@ -112,7 +104,8 @@ export default function AdminDashboardPage() {
           );
         }
 
-        const clubsOk = clubsResponse?.Success ?? clubsResponse?.success ?? true;
+        const clubsOk =
+          clubsResponse?.Success ?? clubsResponse?.success ?? true;
         if (clubsOk) {
           setTotalClubs(
             clubsResponse?.TotalCount ??
@@ -142,7 +135,10 @@ export default function AdminDashboardPage() {
           const errorMsg = response?.message || "Không thể tải danh sách CLB";
           message.error(errorMsg);
           setMyClubsData([]);
-        } else if (response?.success === true && Array.isArray(response?.data)) {
+        } else if (
+          response?.success === true &&
+          Array.isArray(response?.data)
+        ) {
           setMyClubsData(response.data);
         } else {
           // Fallback: nếu response không có success field nhưng có data
@@ -154,7 +150,8 @@ export default function AdminDashboardPage() {
         }
       } catch (error) {
         console.error("Failed to load my clubs statistics", error);
-        const errorMsg = error?.message || "Có lỗi xảy ra khi tải danh sách CLB";
+        const errorMsg =
+          error?.message || "Có lỗi xảy ra khi tải danh sách CLB";
         message.error(errorMsg);
         setMyClubsData([]);
       } finally {
@@ -171,9 +168,10 @@ export default function AdminDashboardPage() {
       setLoadingDashboard(true);
       try {
         const response = await statisticsApiService.getDashboardStatistics();
-        
+
         if (response?.success === false) {
-          const errorMsg = response?.message || "Không tải được thống kê tài chính";
+          const errorMsg =
+            response?.message || "Không tải được thống kê tài chính";
           message.error(errorMsg);
           setDashboardStats({
             pendingCount: 0,
@@ -184,6 +182,7 @@ export default function AdminDashboardPage() {
         } else if (response?.success === true && response?.data) {
           setDashboardStats(response.data);
         } else if (response?.data) {
+          // Fallback nếu không có success field nhưng có data
           setDashboardStats(response.data);
         } else {
           setDashboardStats({
@@ -221,7 +220,7 @@ export default function AdminDashboardPage() {
   };
 
   const clubsWithPendingCount = useMemo(
-    () => myClubsData.filter((club) => (club.pendingCount || 0) > 0).length,
+    () => myClubsData.filter((club) => (club.pendingFees || 0) > 0).length,
     [myClubsData]
   );
 
@@ -234,7 +233,7 @@ export default function AdminDashboardPage() {
     () =>
       myClubsData.filter((club) => {
         const members = club.memberCount || 0;
-        const pending = club.pendingCount || 0;
+        const pending = club.pendingFees || 0;
         if (!members) return false;
         const completionRate = 1 - pending / members;
         return completionRate * 100 < 50;
@@ -259,18 +258,20 @@ export default function AdminDashboardPage() {
         icon: <TeamOutlined />,
         color: "#22c55e",
       },
-      {
-        key: "todayRevenue",
-        label: "Doanh thu hôm nay",
-        value: loadingDashboard ? "-" : formatVnd(dashboardStats.todayRevenue || 0),
-        icon: <DollarOutlined />,
-        color: "#22c55e",
-      },
+      // {
+      //   key: "todayRevenue",
+      //   label: "Doanh thu hôm nay",
+      //   value: loadingDashboard ? "-" : formatVnd(dashboardStats.totalRevenue || 0),
+      //   icon: <ArrowUpOutlined/>,
+      //   color: "#22c55e",
+      // },
       {
         key: "totalRevenue",
         label: "Tổng doanh thu",
-        value: loadingDashboard ? "-" : formatVnd(dashboardStats.totalRevenue || 0),
-        icon: <ArrowUpOutlined />,
+        value: loadingDashboard
+          ? "-"
+          : formatVnd(dashboardStats.todayRevenue || 0),
+        icon: <DollarOutlined />,
         color: "#6366f1",
       },
     ],
@@ -296,11 +297,18 @@ export default function AdminDashboardPage() {
               bordered={false}
               style={{
                 borderRadius: 12,
-                boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                boxShadow:
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
               }}
             >
               <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
                   <div
                     style={{
                       width: 48,
@@ -321,7 +329,10 @@ export default function AdminDashboardPage() {
                   <Statistic
                     value={item.value}
                     title={
-                      <Text type="secondary" style={{ fontSize: 13, fontWeight: 500 }}>
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 13, fontWeight: 500 }}
+                      >
                         {item.label}
                       </Text>
                     }
@@ -347,7 +358,8 @@ export default function AdminDashboardPage() {
             bordered={false}
             style={{
               borderRadius: 12,
-              boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+              boxShadow:
+                "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
             }}
           >
             <Table
@@ -356,6 +368,7 @@ export default function AdminDashboardPage() {
                   title: "CLB",
                   dataIndex: "clubName",
                   key: "clubName",
+                  width: 200,
                   render: (text) => (
                     <Text strong style={{ fontSize: 14, whiteSpace: "normal" }}>
                       {text}
@@ -369,20 +382,21 @@ export default function AdminDashboardPage() {
                   align: "center",
                   width: 120,
                 },
-                {
-                  title: "Phí áp dụng",
-                  dataIndex: "activeFeeCount",
-                  key: "activeFeeCount",
-                  align: "center",
-                  width: 100,
-                },
+                // {
+                //   title: "Phí áp dụng",
+                //   dataIndex: "activeFeeCount",
+                //   key: "activeFeeCount",
+                //   align: "center",
+                //   width: 100,
+                // },
                 {
                   title: "Chờ thanh toán",
-                  dataIndex: "pendingCount",
-                  key: "pendingCount",
+                  dataIndex: "pendingFees",
+                  key: "pendingFees",
                   align: "center",
-                  width: 130,
-                  render: (count) => {
+                  width: 120,
+                  render: (pendingFees) => {
+                    const count = pendingFees || 0;
                     if (count > 0) {
                       return <Tag color="warning">{count}</Tag>;
                     }
@@ -390,16 +404,20 @@ export default function AdminDashboardPage() {
                   },
                 },
                 {
-                  title: "Chi tiết doanh thu",
-                  key: "viewDetail",
+                  title: "Bài đăng",
+                  dataIndex: "postCount",
+                  key: "postCount",
                   align: "center",
-                  width: 160,
-                  render: (_, record) => (
-                    <Button type="link" onClick={() => handleViewDetail(record.clubId)}>
-                      Xem chi tiết
-                    </Button>
-                  ),
+                  width: 110,
                 },
+                {
+                  title: "Yêu cầu tham gia",
+                  dataIndex: "joinRequestCount",
+                  key: "joinRequestCount",
+                  align: "center",
+                  width: 120,
+                },
+
                 {
                   title: "Doanh thu",
                   dataIndex: "totalRevenue",
@@ -410,17 +428,33 @@ export default function AdminDashboardPage() {
                     <Text style={{ fontWeight: 500 }}>{formatVnd(amount)}</Text>
                   ),
                 },
+                {
+                  title: "Chi tiết",
+                  key: "viewDetail",
+                  align: "center",
+                  width: 70,
+                  render: (_, record) => (
+                    <Button
+                      type="link"
+                      onClick={() => handleViewDetail(record.clubId)}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  ),
+                },
               ]}
               dataSource={myClubsData}
               loading={loadingClubs}
               rowKey="clubId"
               onRow={(record) => {
-                const hasPending = (record.pendingCount || 0) > 0;
+                const hasPending = (record.pendingFees || 0) > 0;
                 const noRevenue = (record.totalRevenue || 0) === 0;
 
                 return {
                   style: {
-                    backgroundColor: hasPending ? "rgba(245, 158, 11, 0.06)" : undefined,
+                    backgroundColor: hasPending
+                      ? "rgba(245, 158, 11, 0.06)"
+                      : undefined,
                     opacity: !hasPending && noRevenue ? 0.75 : 1,
                   },
                 };
@@ -445,12 +479,15 @@ export default function AdminDashboardPage() {
             bordered={false}
             style={{
               borderRadius: 12,
-              boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+              boxShadow:
+                "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
             }}
           >
             <Space direction="vertical" size={16} style={{ width: "100%" }}>
               <div>
-                <Text strong style={{ fontSize: 14 }}>Tổng quan rủi ro</Text>
+                <Text strong style={{ fontSize: 14 }}>
+                  Tổng quan rủi ro
+                </Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   Những điểm cần chú ý liên quan đến phí và thanh toán.
                 </Text>
@@ -461,7 +498,10 @@ export default function AdminDashboardPage() {
                   <span style={{ color: "#f97316", fontSize: 16 }}>•</span>
                   <Text style={{ fontSize: 13 }}>
                     <Text strong>
-                      {loadingDashboard ? "-" : dashboardStats.pendingCount ?? 0} khoản phí
+                      {loadingDashboard
+                        ? "-"
+                        : dashboardStats.pendingCount ?? 0}{" "}
+                      khoản phí
                     </Text>{" "}
                     đang chờ thanh toán.
                   </Text>
@@ -472,8 +512,8 @@ export default function AdminDashboardPage() {
                 <Space align="start" size={8}>
                   <span style={{ color: "#f97316", fontSize: 16 }}>•</span>
                   <Text style={{ fontSize: 13 }}>
-                    <Text strong>{clubsNoRevenueCount} CLB</Text>{" "}
-                    chưa thu được bất kỳ khoản phí nào.
+                    <Text strong>{clubsNoRevenueCount} CLB</Text> chưa thu được
+                    bất kỳ khoản phí nào.
                   </Text>
                 </Space>
               </div>
@@ -482,8 +522,8 @@ export default function AdminDashboardPage() {
                 <Space align="start" size={8}>
                   <span style={{ color: "#f97316", fontSize: 16 }}>•</span>
                   <Text style={{ fontSize: 13 }}>
-                    <Text strong>{lowCompletionClubsCount} CLB</Text>{" "}
-                    có tỷ lệ hoàn thành phí ước tính dưới 50%.
+                    <Text strong>{lowCompletionClubsCount} CLB</Text> có tỷ lệ
+                    hoàn thành phí ước tính dưới 50%.
                   </Text>
                 </Space>
               </div>
@@ -492,25 +532,12 @@ export default function AdminDashboardPage() {
         </Col>
       </Row>
 
-      {/* Hoạt động gần đây */}
-      <Card
-        title="Hoạt động gần đây"
-        bordered={false}
-        style={{
-          borderRadius: 12,
-          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-        }}
-      >
-        <Table
-          columns={activityColumns}
-          dataSource={recentActivities}
-          pagination={false}
-          size="middle"
-        />
-      </Card>
-
       {/* Modal chi tiết CLB */}
-      <ClubDetailModal open={isDetailModalOpen} onClose={handleCloseModal} clubId={selectedClubId} />
+      <ClubDetailModal
+        open={isDetailModalOpen}
+        onClose={handleCloseModal}
+        clubId={selectedClubId}
+      />
     </Space>
   );
 }
