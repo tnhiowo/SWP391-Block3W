@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Form,
@@ -17,31 +17,41 @@ import {
   Avatar,
   Tooltip,
   theme,
-} from 'antd';
-import { SearchOutlined, ReloadOutlined, UserOutlined, MailOutlined, PhoneOutlined, IdcardOutlined, SafetyOutlined, CalendarOutlined, LoginOutlined } from '@ant-design/icons';
-import { userApiService } from '../../services/userApiService';
+} from "antd";
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  UserOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  IdcardOutlined,
+  SafetyOutlined,
+  CalendarOutlined,
+  LoginOutlined,
+} from "@ant-design/icons";
+import { userApiService } from "../../services/userApiService";
 
 const { Title, Text } = Typography;
 
 const ROLE_OPTIONS = [
-  { label: 'Admin', value: 'ADMIN' },
-  { label: 'Chủ nhiệm CLB', value: 'CLUB_LEADER' },
-  { label: 'Sinh viên', value: 'STUDENT' },
+  { label: "Admin", value: "ADMIN" },
+  { label: "Chủ nhiệm CLB", value: "CLUB_LEADER" },
+  { label: "Sinh viên", value: "STUDENT" },
 ];
 
 const STATUS_OPTIONS = [
-  { label: 'Đang hoạt động', value: 'ACTIVE' },
-  { label: 'Ngừng hoạt động', value: 'INACTIVE' },
-  { label: 'Bị khoá', value: 'LOCKED' },
-  { label: 'Chờ xác minh', value: 'PENDING_VERIFICATION' },
+  { label: "Đang hoạt động", value: "ACTIVE" },
+  { label: "Ngừng hoạt động", value: "INACTIVE" },
+  { label: "Bị khoá", value: "LOCKED" },
+  { label: "Chờ xác minh", value: "PENDING_VERIFICATION" },
 ];
 
 // Status options for API (matching database constraint)
 const STATUS_OPTIONS_API = [
-  { label: 'Đang hoạt động', value: 'Active' },
-  { label: 'Vô hiệu hóa', value: 'Disabled' },
-  { label: 'Bị khoá', value: 'Locked' },
-  { label: 'Chờ xác minh', value: 'PendingVerification' },
+  { label: "Đang hoạt động", value: "Active" },
+  { label: "Vô hiệu hóa", value: "Disabled" },
+  { label: "Bị khoá", value: "Locked" },
+  { label: "Chờ xác minh", value: "PendingVerification" },
 ];
 
 // Normalize backend envelope fields to a single shape
@@ -53,45 +63,44 @@ const normalizeApiResponse = (response = {}) => ({
     response.Payload ??
     response.payload ??
     null,
-  totalCount:
-    response.TotalCount ?? response.totalCount ?? response.Count ?? 0,
-  message: response.Message ?? response.message ?? '',
+  totalCount: response.TotalCount ?? response.totalCount ?? response.Count ?? 0,
+  message: response.Message ?? response.message ?? "",
 });
 
 // Map component status to API status
 const statusMapToApi = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Disabled', // Map INACTIVE to Disabled for API
-  LOCKED: 'Locked',
-  PENDING_VERIFICATION: 'PendingVerification',
+  ACTIVE: "Active",
+  INACTIVE: "Disabled", // Map INACTIVE to Disabled for API
+  LOCKED: "Locked",
+  PENDING_VERIFICATION: "PendingVerification",
 };
 
 // Map API status to component status
 const statusMapFromApi = {
-  Active: 'ACTIVE',
-  Disabled: 'INACTIVE',
-  Locked: 'LOCKED',
-  PendingVerification: 'PENDING_VERIFICATION',
+  Active: "ACTIVE",
+  Disabled: "INACTIVE",
+  Locked: "LOCKED",
+  PendingVerification: "PENDING_VERIFICATION",
 };
 
 const SORT_BY_OPTIONS = [
-  { label: 'ID', value: 'UserId' },
-  { label: 'Họ tên', value: 'FullName' },
-  { label: 'Email', value: 'Email' },
-  { label: 'Ngày tạo', value: 'CreatedAt' },
-  { label: 'Lần đăng nhập gần nhất', value: 'LastLogin' },
+  { label: "ID", value: "UserId" },
+  { label: "Họ tên", value: "FullName" },
+  { label: "Email", value: "Email" },
+  { label: "Ngày tạo", value: "CreatedAt" },
+  { label: "Lần đăng nhập gần nhất", value: "LastLogin" },
 ];
 
 const SORT_ORDER_OPTIONS = [
-  { label: 'Tăng dần', value: 'asc' },
-  { label: 'Giảm dần', value: 'desc' },
+  { label: "Tăng dần", value: "asc" },
+  { label: "Giảm dần", value: "desc" },
 ];
 
 function renderRoleTag(role) {
   switch (role) {
-    case 'ADMIN':
+    case "ADMIN":
       return <Tag color="red">Admin</Tag>;
-    case 'CLUB_LEADER':
+    case "CLUB_LEADER":
       return <Tag color="blue">Chủ nhiệm CLB</Tag>;
     default:
       return <Tag color="green">Sinh viên</Tag>;
@@ -122,21 +131,21 @@ function renderDetailStatusTag(status) {
 
 // Helper function to get first letter of name for avatar
 function getInitials(fullName) {
-  if (!fullName) return 'U';
-  const names = fullName.trim().split(' ');
+  if (!fullName) return "U";
+  const names = fullName.trim().split(" ");
   if (names.length === 1) return names[0].charAt(0).toUpperCase();
   return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
 }
 
 function renderStatusTag(status) {
   switch (status) {
-    case 'ACTIVE':
+    case "ACTIVE":
       return <Tag color="green">Đang hoạt động</Tag>;
-    case 'INACTIVE':
+    case "INACTIVE":
       return <Tag>Ngừng hoạt động</Tag>;
-    case 'LOCKED':
+    case "LOCKED":
       return <Tag color="red">Bị khoá</Tag>;
-    case 'PENDING_VERIFICATION':
+    case "PENDING_VERIFICATION":
       return <Tag color="orange">Chờ xác minh</Tag>;
     default:
       return <Tag>{status}</Tag>;
@@ -144,10 +153,10 @@ function renderStatusTag(status) {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return '';
+  if (!dateString) return "";
   const d = new Date(dateString);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
 }
@@ -158,25 +167,25 @@ function mapUserFromApi(apiUser) {
 
   // Map Role: "Student" -> "STUDENT", "Admin" -> "ADMIN", "ClubLeader" -> "CLUB_LEADER"
   const roleMap = {
-    Student: 'STUDENT',
-    Admin: 'ADMIN',
-    ClubLeader: 'CLUB_LEADER',
-    CLUB_LEADER: 'CLUB_LEADER',
-    ADMIN: 'ADMIN',
-    STUDENT: 'STUDENT',
+    Student: "STUDENT",
+    Admin: "ADMIN",
+    ClubLeader: "CLUB_LEADER",
+    CLUB_LEADER: "CLUB_LEADER",
+    ADMIN: "ADMIN",
+    STUDENT: "STUDENT",
   };
 
   // Map AccountStatus: "Active" -> "ACTIVE", "Disabled" -> "INACTIVE", etc.
   const statusMap = {
-    Active: 'ACTIVE',
-    Disabled: 'INACTIVE', // API uses Disabled, component uses INACTIVE
-    Inactive: 'INACTIVE', // Support both for backward compatibility
-    Locked: 'LOCKED',
-    PendingVerification: 'PENDING_VERIFICATION',
-    ACTIVE: 'ACTIVE',
-    INACTIVE: 'INACTIVE',
-    LOCKED: 'LOCKED',
-    PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+    Active: "ACTIVE",
+    Disabled: "INACTIVE", // API uses Disabled, component uses INACTIVE
+    Inactive: "INACTIVE", // Support both for backward compatibility
+    Locked: "LOCKED",
+    PendingVerification: "PENDING_VERIFICATION",
+    ACTIVE: "ACTIVE",
+    INACTIVE: "INACTIVE",
+    LOCKED: "LOCKED",
+    PENDING_VERIFICATION: "PENDING_VERIFICATION",
   };
 
   const roleValue = apiUser.Role ?? apiUser.role ?? apiUser.roleName;
@@ -189,9 +198,9 @@ function mapUserFromApi(apiUser) {
     email: apiUser.Email ?? apiUser.email,
     phone: apiUser.Phone ?? apiUser.phone,
     studentCode: apiUser.StudentCode ?? apiUser.studentCode,
-    role: roleMap[roleValue] || roleValue?.toUpperCase() || 'STUDENT',
+    role: roleMap[roleValue] || roleValue?.toUpperCase() || "STUDENT",
     accountStatus:
-      statusMap[statusValue] || statusValue?.toUpperCase() || 'ACTIVE',
+      statusMap[statusValue] || statusValue?.toUpperCase() || "ACTIVE",
     createdAt: apiUser.CreatedAt ?? apiUser.createdAt,
     lastLogin: apiUser.LastLogin ?? apiUser.lastLogin,
     avatar: apiUser.Avatar ?? apiUser.avatar,
@@ -209,7 +218,8 @@ function normalizeUserDetail(apiUser) {
     Phone: apiUser.Phone ?? apiUser.phone,
     StudentCode: apiUser.StudentCode ?? apiUser.studentCode,
     Role: apiUser.Role ?? apiUser.role ?? apiUser.roleName,
-    AccountStatus: apiUser.AccountStatus ?? apiUser.accountStatus ?? apiUser.status,
+    AccountStatus:
+      apiUser.AccountStatus ?? apiUser.accountStatus ?? apiUser.status,
     Avatar: apiUser.Avatar ?? apiUser.avatar,
     CreatedAt: apiUser.CreatedAt ?? apiUser.createdAt,
     LastLogin: apiUser.LastLogin ?? apiUser.lastLogin,
@@ -220,11 +230,11 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create' | 'edit'
+  const [modalMode, setModalMode] = useState("create"); // 'create' | 'edit'
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
   const [filterForm] = Form.useForm();
-  
+
   // Detail modal state
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [userDetail, setUserDetail] = useState(null);
@@ -234,9 +244,9 @@ export default function AdminUsersPage() {
   const [filters, setFilters] = useState({
     pageNumber: 1,
     pageSize: 10,
-    search: '',
-    sortBy: 'UserId',
-    sortOrder: 'asc',
+    search: "",
+    sortBy: "UserId",
+    sortOrder: "asc",
   });
   const [totalCount, setTotalCount] = useState(0);
 
@@ -254,8 +264,12 @@ export default function AdminUsersPage() {
         };
 
         const response = await userApiService.getAllUsers(params);
-        const { success, data, totalCount, message: apiMessage } =
-          normalizeApiResponse(response);
+        const {
+          success,
+          data,
+          totalCount,
+          message: apiMessage,
+        } = normalizeApiResponse(response);
 
         if (success && Array.isArray(data)) {
           const mappedUsers = data
@@ -264,11 +278,13 @@ export default function AdminUsersPage() {
           setUsers(mappedUsers);
           setTotalCount(totalCount || data.length || 0);
         } else {
-          message.error(apiMessage || 'Không thể tải danh sách người dùng');
+          message.error(apiMessage || "Không thể tải danh sách người dùng");
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
-        message.error(error.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
+        console.error("Error fetching users:", error);
+        message.error(
+          error.message || "Có lỗi xảy ra khi tải danh sách người dùng"
+        );
       } finally {
         setLoading(false);
       }
@@ -276,44 +292,48 @@ export default function AdminUsersPage() {
 
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.pageNumber, filters.pageSize, filters.search, filters.sortBy, filters.sortOrder]);
+  }, [
+    filters.pageNumber,
+    filters.pageSize,
+    filters.search,
+    filters.sortBy,
+    filters.sortOrder,
+  ]);
 
   const columns = useMemo(
     () => [
       {
-        title: 'STT',
-        dataIndex: 'userId',
-        key: 'userId',
+        title: "ID User",
+        dataIndex: "userId",
+        key: "userId",
         width: 80,
-        align: 'center',
-        sorter: (a, b) => a.userId - b.userId,
-        defaultSortOrder: 'ascend',
+        align: "center",
       },
       {
-        title: 'Họ tên',
-        dataIndex: 'fullName',
-        key: 'fullName',
+        title: "Họ tên",
+        dataIndex: "fullName",
+        key: "fullName",
       },
       {
-        title: 'Email',
-        dataIndex: 'email',
-        key: 'email',
+        title: "Email",
+        dataIndex: "email",
+        key: "email",
       },
       {
-        title: 'Số điện thoại',
-        dataIndex: 'phone',
-        key: 'phone',
+        title: "Số điện thoại",
+        dataIndex: "phone",
+        key: "phone",
       },
       {
-        title: 'Vai trò',
-        dataIndex: 'role',
-        key: 'role',
+        title: "Vai trò",
+        dataIndex: "role",
+        key: "role",
         render: renderRoleTag,
       },
       {
-        title: 'Trạng thái',
-        dataIndex: 'accountStatus',
-        key: 'accountStatus',
+        title: "Trạng thái",
+        dataIndex: "accountStatus",
+        key: "accountStatus",
         render: renderStatusTag,
       },
       // {
@@ -329,12 +349,13 @@ export default function AdminUsersPage() {
       //   render: (value) => (value ? formatDate(value) : 'Chưa đăng nhập'),
       // },
       {
-        title: 'Thao tác',
-        key: 'actions',
+        title: "Thao tác",
+        key: "actions",
         render: (_, record) => {
           // Get current API status from component status
-          const currentApiStatus = statusMapToApi[record.accountStatus] || 'Active';
-          
+          const currentApiStatus =
+            statusMapToApi[record.accountStatus] || "Active";
+
           return (
             <Space>
               <Button size="small" onClick={() => handleViewDetail(record)}>
@@ -343,7 +364,7 @@ export default function AdminUsersPage() {
               <Button size="small" onClick={() => handleEdit(record)}>
                 Sửa
               </Button>
-              {record.role !== 'ADMIN' && (
+              {record.role !== "ADMIN" && (
                 <Select
                   size="small"
                   value={currentApiStatus}
@@ -371,24 +392,18 @@ export default function AdminUsersPage() {
 
   const handleSearch = (values) => {
     handleFilterChange({
-      search: values.search || '',
-      sortBy: values.sortBy || 'UserId',
-      sortOrder: values.sortOrder || 'asc',
+      search: values.search || "",
     });
   };
 
   const handleResetFilters = () => {
     filterForm.resetFields();
-    filterForm.setFieldsValue({
-      sortBy: 'UserId',
-      sortOrder: 'asc',
-    });
     setFilters({
       pageNumber: 1,
       pageSize: 10,
-      search: '',
-      sortBy: 'UserId',
-      sortOrder: 'asc',
+      search: "",
+      sortBy: "UserId",
+      sortOrder: "asc",
     });
   };
 
@@ -401,24 +416,24 @@ export default function AdminUsersPage() {
   };
 
   const openCreateModal = () => {
-    setModalMode('create');
+    setModalMode("create");
     setEditingUser(null);
     form.resetFields();
     form.setFieldsValue({
-      role: 'STUDENT',
+      role: "STUDENT",
     });
     setIsModalOpen(true);
   };
 
   const handleEdit = (user) => {
-    setModalMode('edit');
+    setModalMode("edit");
     setEditingUser(user);
     form.setFieldsValue({
       fullName: user.fullName,
       email: user.email,
-      phone: user.phone || '',
-      studentCode: user.studentCode || '',
-      avatar: user.avatar || '',
+      phone: user.phone || "",
+      studentCode: user.studentCode || "",
+      // avatar: user.avatar || '',
     });
     setIsModalOpen(true);
   };
@@ -430,17 +445,23 @@ export default function AdminUsersPage() {
       setUserDetail(null);
 
       const response = await userApiService.getUserById(user.userId);
-      const { success, data, message: apiMessage } = normalizeApiResponse(response);
+      const {
+        success,
+        data,
+        message: apiMessage,
+      } = normalizeApiResponse(response);
 
       if (success && data) {
         setUserDetail(normalizeUserDetail(data));
       } else {
-        message.error(apiMessage || 'Không thể tải thông tin chi tiết');
+        message.error(apiMessage || "Không thể tải thông tin chi tiết");
         setIsDetailModalOpen(false);
       }
     } catch (error) {
-      console.error('Error fetching user detail:', error);
-      message.error(error.message || 'Có lỗi xảy ra khi tải thông tin chi tiết');
+      console.error("Error fetching user detail:", error);
+      message.error(
+        error.message || "Có lỗi xảy ra khi tải thông tin chi tiết"
+      );
       setIsDetailModalOpen(false);
     } finally {
       setDetailLoading(false);
@@ -452,7 +473,7 @@ export default function AdminUsersPage() {
       // Store current page number and filters before update
       const currentPageNumber = filters.pageNumber;
       const currentPageSize = filters.pageSize;
-      
+
       await userApiService.updateUserStatus(user.userId, {
         AccountStatus: newApiStatus,
       });
@@ -467,28 +488,32 @@ export default function AdminUsersPage() {
       };
 
       const response = await userApiService.getAllUsers(params);
-      const { success, data, totalCount, message: apiMessage } =
-        normalizeApiResponse(response);
+      const {
+        success,
+        data,
+        totalCount,
+        message: apiMessage,
+      } = normalizeApiResponse(response);
 
       if (success && Array.isArray(data)) {
         const mappedUsers = data
           .map(mapUserFromApi)
           .filter((user) => user && user.userId);
         const newTotalCount = totalCount || data.length || 0;
-        
+
         // Calculate max page based on new total count
         const maxPage = Math.ceil(newTotalCount / currentPageSize);
         let finalPageNumber = currentPageNumber;
-        
+
         // If current page is beyond max page, adjust to last valid page
         if (currentPageNumber > maxPage && maxPage > 0) {
           finalPageNumber = maxPage;
         }
-        
+
         // Update users and total count
         setUsers(mappedUsers);
         setTotalCount(newTotalCount);
-        
+
         // Only update filters if page number needs to change
         // This prevents unnecessary useEffect trigger
         if (finalPageNumber !== currentPageNumber) {
@@ -503,37 +528,43 @@ export default function AdminUsersPage() {
       }
 
       const statusLabels = {
-        Active: 'Đang hoạt động',
-        Disabled: 'Vô hiệu hóa',
-        Locked: 'Bị khoá',
-        PendingVerification: 'Chờ xác minh',
+        Active: "Đang hoạt động",
+        Disabled: "Vô hiệu hóa",
+        Locked: "Bị khoá",
+        PendingVerification: "Chờ xác minh",
       };
-      
-      message.success(`Đã cập nhật trạng thái thành "${statusLabels[newApiStatus] || newApiStatus}"`);
+
+      message.success(
+        `Đã cập nhật trạng thái thành "${
+          statusLabels[newApiStatus] || newApiStatus
+        }"`
+      );
     } catch (error) {
-      console.error('Error updating status:', error);
-      message.error(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái tài khoản');
+      console.error("Error updating status:", error);
+      message.error(
+        error.message || "Có lỗi xảy ra khi cập nhật trạng thái tài khoản"
+      );
     }
   };
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      
-      if (modalMode === 'create') {
+
+      if (modalMode === "create") {
         // Map role from component format to API format
         const roleMapToApi = {
-          ADMIN: 'Admin',
-          CLUB_LEADER: 'ClubLeader',
-          STUDENT: 'Student',
+          ADMIN: "Admin",
+          CLUB_LEADER: "ClubLeader",
+          STUDENT: "Student",
         };
 
         const requestData = {
           FullName: values.fullName,
           Email: values.email,
           Password: values.password,
-          Phone: values.phone || '',
-          StudentCode: values.studentCode || '',
+          Phone: values.phone || "",
+          StudentCode: values.studentCode || "",
           Role: roleMapToApi[values.role] || values.role,
         };
 
@@ -541,10 +572,10 @@ export default function AdminUsersPage() {
         const { success, message: apiMessage } = normalizeApiResponse(response);
 
         if (success) {
-          message.success(apiMessage || 'Thêm User thành công');
+          message.success(apiMessage || "Thêm User thành công");
           setIsModalOpen(false);
           form.resetFields();
-          
+
           // Refresh the list
           const params = {
             PageNumber: filters.pageNumber,
@@ -555,8 +586,11 @@ export default function AdminUsersPage() {
           };
 
           const refreshResponse = await userApiService.getAllUsers(params);
-          const { success: refreshSuccess, data, totalCount } =
-            normalizeApiResponse(refreshResponse);
+          const {
+            success: refreshSuccess,
+            data,
+            totalCount,
+          } = normalizeApiResponse(refreshResponse);
 
           if (refreshSuccess && Array.isArray(data)) {
             const mappedUsers = data
@@ -566,26 +600,29 @@ export default function AdminUsersPage() {
             setTotalCount(totalCount || data.length || 0);
           }
         } else {
-          message.error(apiMessage || 'Không thể tạo user');
+          message.error(apiMessage || "Không thể tạo user");
         }
       } else if (editingUser) {
         // Map form values to API format
         const requestData = {
           FullName: values.fullName,
           Email: values.email,
-          Phone: values.phone || '',
-          StudentCode: values.studentCode || '',
-          Avatar: values.avatar || '',
+          Phone: values.phone || "",
+          StudentCode: values.studentCode || "",
+          Avatar: values.avatar || "",
         };
 
-        const response = await userApiService.updateUser(editingUser.userId, requestData);
+        const response = await userApiService.updateUser(
+          editingUser.userId,
+          requestData
+        );
         const { success, message: apiMessage } = normalizeApiResponse(response);
 
         if (success) {
-          message.success(apiMessage || 'Cập nhật User thành công');
+          message.success(apiMessage || "Cập nhật User thành công");
           setIsModalOpen(false);
           form.resetFields();
-          
+
           // Refresh the list with current page and filters
           const currentPageNumber = filters.pageNumber;
           const params = {
@@ -597,8 +634,11 @@ export default function AdminUsersPage() {
           };
 
           const refreshResponse = await userApiService.getAllUsers(params);
-          const { success: refreshSuccess, data, totalCount } =
-            normalizeApiResponse(refreshResponse);
+          const {
+            success: refreshSuccess,
+            data,
+            totalCount,
+          } = normalizeApiResponse(refreshResponse);
 
           if (refreshSuccess && Array.isArray(data)) {
             const mappedUsers = data
@@ -608,22 +648,28 @@ export default function AdminUsersPage() {
             setTotalCount(totalCount || data.length || 0);
           }
         } else {
-          message.error(apiMessage || 'Không thể cập nhật user');
+          message.error(apiMessage || "Không thể cập nhật user");
         }
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
       if (error.errorFields) {
         // Form validation errors
         return;
       }
-      message.error(error.message || 'Có lỗi xảy ra khi lưu user');
+      message.error(error.message || "Có lỗi xảy ra khi lưu user");
     }
   };
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Space direction="vertical" size={24} style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div>
           <Title level={3} style={{ margin: 0, marginBottom: 4 }}>
             Quản lý Users
@@ -642,7 +688,8 @@ export default function AdminUsersPage() {
         bordered={false}
         style={{
           borderRadius: 12,
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          boxShadow:
+            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
         }}
       >
         <Form
@@ -650,42 +697,33 @@ export default function AdminUsersPage() {
           layout="vertical"
           onFinish={handleSearch}
           initialValues={{
-            search: '',
-            sortBy: 'UserId',
-            sortOrder: 'asc',
+            search: "",
           }}
         >
           <Row gutter={16}>
             <Col xs={24} sm={12} md={8} lg={6}>
               <Form.Item label="Tìm kiếm" name="search">
                 <Input
-                  placeholder="Tìm theo tên, email..."
+                  placeholder="Tìm theo tên user..."
                   prefix={<SearchOutlined />}
                   allowClear
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Form.Item label="Sắp xếp theo" name="sortBy">
-                <Select
-                  placeholder="Chọn trường sắp xếp"
-                  allowClear
-                  options={SORT_BY_OPTIONS}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Form.Item label="Thứ tự" name="sortOrder">
-                <Select options={SORT_ORDER_OPTIONS} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={24} md={24} lg={6}>
+            <Col xs={24} sm={24} md={24} lg={18}>
               <Form.Item label=" " style={{ marginBottom: 0 }}>
                 <Space>
-                  <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    icon={<SearchOutlined />}
+                  >
                     Tìm kiếm
                   </Button>
-                  <Button onClick={handleResetFilters} icon={<ReloadOutlined />}>
+                  <Button
+                    onClick={handleResetFilters}
+                    icon={<ReloadOutlined />}
+                  >
                     Làm mới
                   </Button>
                 </Space>
@@ -699,7 +737,8 @@ export default function AdminUsersPage() {
         bordered={false}
         style={{
           borderRadius: 12,
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          boxShadow:
+            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
         }}
       >
         <Spin spinning={loading}>
@@ -714,7 +753,7 @@ export default function AdminUsersPage() {
               showSizeChanger: true,
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} của ${total} người dùng`,
-              pageSizeOptions: ['10', '20', '50', '100'],
+              pageSizeOptions: ["10", "20", "50", "100"],
             }}
             onChange={handleTableChange}
             style={{ borderRadius: 8 }}
@@ -723,7 +762,7 @@ export default function AdminUsersPage() {
       </Card>
 
       <Modal
-        title={modalMode === 'create' ? 'Thêm User mới' : 'Chỉnh sửa User'}
+        title={modalMode === "create" ? "Thêm User mới" : "Chỉnh sửa User"}
         open={isModalOpen}
         onOk={handleSubmit}
         onCancel={() => setIsModalOpen(false)}
@@ -734,7 +773,7 @@ export default function AdminUsersPage() {
           <Form.Item
             label="Họ tên"
             name="fullName"
-            rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+            rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
           >
             <Input placeholder="Nhập họ tên" />
           </Form.Item>
@@ -743,20 +782,20 @@ export default function AdminUsersPage() {
             label="Email"
             name="email"
             rules={[
-              { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' },
+              { required: true, message: "Vui lòng nhập email" },
+              { type: "email", message: "Email không hợp lệ" },
             ]}
           >
             <Input placeholder="Nhập email" />
           </Form.Item>
 
-          {modalMode === 'create' && (
+          {modalMode === "create" && (
             <Form.Item
               label="Mật khẩu"
               name="password"
               rules={[
-                { required: true, message: 'Vui lòng nhập mật khẩu' },
-                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+                { required: true, message: "Vui lòng nhập mật khẩu" },
+                { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" },
               ]}
             >
               <Input.Password placeholder="Nhập mật khẩu" />
@@ -771,22 +810,22 @@ export default function AdminUsersPage() {
             <Input placeholder="Nhập mã sinh viên (nếu có)" />
           </Form.Item>
 
-          {modalMode === 'create' && (
+          {modalMode === "create" && (
             <Form.Item
               label="Vai trò"
               name="role"
               initialValue="STUDENT"
-              rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
+              rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
             >
               <Select options={ROLE_OPTIONS} />
             </Form.Item>
           )}
 
-          {modalMode === 'edit' && (
+          {/* {modalMode === 'edit' && (
             <Form.Item label="Avatar URL" name="avatar">
               <Input placeholder="Nhập URL avatar (nếu có)" />
             </Form.Item>
-          )}
+          )} */}
         </Form>
       </Modal>
 
@@ -796,7 +835,11 @@ export default function AdminUsersPage() {
         open={isDetailModalOpen}
         onCancel={() => setIsDetailModalOpen(false)}
         footer={[
-          <Button key="close" type="primary" onClick={() => setIsDetailModalOpen(false)}>
+          <Button
+            key="close"
+            type="primary"
+            onClick={() => setIsDetailModalOpen(false)}
+          >
             Đóng
           </Button>,
         ]}
@@ -811,13 +854,14 @@ export default function AdminUsersPage() {
               <Col xs={24} md={8}>
                 <div
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: '24px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    borderRadius: '12px',
-                    color: '#fff',
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "24px",
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    borderRadius: "12px",
+                    color: "#fff",
                     marginBottom: 24,
                   }}
                 >
@@ -826,10 +870,10 @@ export default function AdminUsersPage() {
                     size={120}
                     src={userDetail.Avatar}
                     style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      backgroundColor: "rgba(255, 255, 255, 0.2)",
                       fontSize: 48,
                       marginBottom: 16,
-                      border: '4px solid rgba(255, 255, 255, 0.3)',
+                      border: "4px solid rgba(255, 255, 255, 0.3)",
                     }}
                   >
                     {getInitials(userDetail.FullName)}
@@ -839,10 +883,10 @@ export default function AdminUsersPage() {
                   <Typography.Title
                     level={3}
                     style={{
-                      color: '#fff',
+                      color: "#fff",
                       margin: 0,
                       marginBottom: 8,
-                      textAlign: 'center',
+                      textAlign: "center",
                       fontWeight: 600,
                     }}
                   >
@@ -855,19 +899,29 @@ export default function AdminUsersPage() {
                   </div>
 
                   {/* Basic Info */}
-                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 16,
+                    }}
+                  >
                     <div>
                       <Typography.Text
                         style={{
-                          color: 'rgba(255, 255, 255, 0.8)',
+                          color: "rgba(255, 255, 255, 0.8)",
                           fontSize: 12,
-                          display: 'block',
+                          display: "block",
                           marginBottom: 4,
                         }}
                       >
                         ID
                       </Typography.Text>
-                      <Typography.Text strong style={{ color: '#fff', fontSize: 16 }}>
+                      <Typography.Text
+                        strong
+                        style={{ color: "#fff", fontSize: 16 }}
+                      >
                         {userDetail.UserId}
                       </Typography.Text>
                     </div>
@@ -875,9 +929,9 @@ export default function AdminUsersPage() {
                     <div>
                       <Typography.Text
                         style={{
-                          color: 'rgba(255, 255, 255, 0.8)',
+                          color: "rgba(255, 255, 255, 0.8)",
                           fontSize: 12,
-                          display: 'block',
+                          display: "block",
                           marginBottom: 4,
                         }}
                       >
@@ -887,17 +941,19 @@ export default function AdminUsersPage() {
                         <Tooltip title={userDetail.Email}>
                           <Typography.Text
                             style={{
-                              color: '#fff',
+                              color: "#fff",
                               fontSize: 14,
-                              cursor: 'help',
-                              display: 'block',
+                              cursor: "help",
+                              display: "block",
                             }}
                           >
                             {userDetail.Email.substring(0, 25)}...
                           </Typography.Text>
                         </Tooltip>
                       ) : (
-                        <Typography.Text style={{ color: '#fff', fontSize: 14 }}>
+                        <Typography.Text
+                          style={{ color: "#fff", fontSize: 14 }}
+                        >
                           {userDetail.Email}
                         </Typography.Text>
                       )}
@@ -906,16 +962,16 @@ export default function AdminUsersPage() {
                     <div>
                       <Typography.Text
                         style={{
-                          color: 'rgba(255, 255, 255, 0.8)',
+                          color: "rgba(255, 255, 255, 0.8)",
                           fontSize: 12,
-                          display: 'block',
+                          display: "block",
                           marginBottom: 4,
                         }}
                       >
                         Số điện thoại
                       </Typography.Text>
-                      <Typography.Text style={{ color: '#fff', fontSize: 14 }}>
-                        {userDetail.Phone || 'Chưa có'}
+                      <Typography.Text style={{ color: "#fff", fontSize: 14 }}>
+                        {userDetail.Phone || "Chưa có"}
                       </Typography.Text>
                     </div>
                   </div>
@@ -924,22 +980,37 @@ export default function AdminUsersPage() {
 
               {/* Right Section: Detail Cards */}
               <Col xs={24} md={16}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                >
                   {/* Card: Thông tin cá nhân */}
                   <Card
                     title={
                       <span>
-                        <UserOutlined style={{ marginRight: 8, color: '#7f56da' }} />
+                        <UserOutlined
+                          style={{ marginRight: 8, color: "#7f56da" }}
+                        />
                         Thông tin cá nhân
                       </span>
                     }
-                    style={{ borderRadius: '8px' }}
+                    style={{ borderRadius: "8px" }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
                       <div>
                         <Typography.Text
                           strong
-                          style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            display: "block",
+                            marginBottom: 4,
+                          }}
                         >
                           Họ tên
                         </Typography.Text>
@@ -951,7 +1022,12 @@ export default function AdminUsersPage() {
                       <div>
                         <Typography.Text
                           strong
-                          style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            display: "block",
+                            marginBottom: 4,
+                          }}
                         >
                           Mã sinh viên
                         </Typography.Text>
@@ -960,7 +1036,10 @@ export default function AdminUsersPage() {
                             {userDetail.StudentCode}
                           </Typography.Text>
                         ) : (
-                          <Typography.Text type="secondary" style={{ fontSize: 15 }}>
+                          <Typography.Text
+                            type="secondary"
+                            style={{ fontSize: 15 }}
+                          >
                             Chưa có
                           </Typography.Text>
                         )}
@@ -972,17 +1051,30 @@ export default function AdminUsersPage() {
                   <Card
                     title={
                       <span>
-                        <SafetyOutlined style={{ marginRight: 8, color: '#7f56da' }} />
+                        <SafetyOutlined
+                          style={{ marginRight: 8, color: "#7f56da" }}
+                        />
                         Thông tin tài khoản
                       </span>
                     }
-                    style={{ borderRadius: '8px' }}
+                    style={{ borderRadius: "8px" }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
                       <div>
                         <Typography.Text
                           strong
-                          style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            display: "block",
+                            marginBottom: 4,
+                          }}
                         >
                           Vai trò
                         </Typography.Text>
@@ -992,7 +1084,12 @@ export default function AdminUsersPage() {
                       <div>
                         <Typography.Text
                           strong
-                          style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            display: "block",
+                            marginBottom: 4,
+                          }}
                         >
                           Trạng thái
                         </Typography.Text>
@@ -1005,17 +1102,30 @@ export default function AdminUsersPage() {
                   <Card
                     title={
                       <span>
-                        <CalendarOutlined style={{ marginRight: 8, color: '#7f56da' }} />
+                        <CalendarOutlined
+                          style={{ marginRight: 8, color: "#7f56da" }}
+                        />
                         Hoạt động
                       </span>
                     }
-                    style={{ borderRadius: '8px' }}
+                    style={{ borderRadius: "8px" }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
                       <div>
                         <Typography.Text
                           strong
-                          style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            display: "block",
+                            marginBottom: 4,
+                          }}
                         >
                           Ngày tạo
                         </Typography.Text>
@@ -1027,7 +1137,12 @@ export default function AdminUsersPage() {
                       <div>
                         <Typography.Text
                           strong
-                          style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            display: "block",
+                            marginBottom: 4,
+                          }}
                         >
                           Lần đăng nhập gần nhất
                         </Typography.Text>
@@ -1036,7 +1151,10 @@ export default function AdminUsersPage() {
                             {formatDate(userDetail.LastLogin)}
                           </Typography.Text>
                         ) : (
-                          <Typography.Text type="secondary" style={{ fontSize: 15 }}>
+                          <Typography.Text
+                            type="secondary"
+                            style={{ fontSize: 15 }}
+                          >
                             Chưa đăng nhập
                           </Typography.Text>
                         )}
@@ -1052,4 +1170,3 @@ export default function AdminUsersPage() {
     </Space>
   );
 }
-
