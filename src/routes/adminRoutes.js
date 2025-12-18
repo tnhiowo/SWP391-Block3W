@@ -31,13 +31,13 @@ export const adminChildRoutes = [
     iconKey: 'clubs',
     element: <AdminClubsPage />,
   },
-  {
-    path: 'invoices',
-    key: 'invoices',
-    label: 'Hóa đơn / Phí',
-    iconKey: 'invoices',
-    element: <AdminInvoicesPage />,
-  },
+  // {
+  //   path: 'invoices',
+  //   key: 'invoices',
+  //   label: 'Hóa đơn / Phí',
+  //   iconKey: 'invoices',
+  //   element: <AdminInvoicesPage />,
+  // },
   // {
   //   path: 'posts',
   //   key: 'posts',
@@ -66,7 +66,7 @@ const adminRoutes = [
     children: [
       ...adminChildRoutes.map((route) => {
         if (route.isIndex) {
-          return { index: true, element: route.element, key: route.key };
+          return { index: true,element: route.element,key: route.key };
         }
         return {
           path: route.path,

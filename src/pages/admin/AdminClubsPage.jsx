@@ -247,15 +247,19 @@ export default function AdminClubsPage() {
   };
 
   const handleApproveClub = (club) => {
+    const normalizedStatus = normalizeStatus(club.status);
+    const isSuspended = normalizedStatus === 'SUSPENDED';
+    const isPending = normalizedStatus === 'PENDING';
+    
     Modal.confirm({
-      title: 'Duyệt CLB này?',
-      okText: 'Duyệt',
+      title: isSuspended ? 'Mở lại CLB này?' : 'Duyệt CLB này?',
+      okText: isSuspended ? 'Mở lại' : 'Duyệt',
       cancelText: 'Hủy',
       onOk: async () => {
         setLoading(true);
         try {
           const res = await clubApiService.approveClub(club.clubId);
-          const resMessage = res?.message || res?.Message || 'Duyệt CLB thành công';
+          const resMessage = res?.message || res?.Message || (isSuspended ? 'Mở lại CLB thành công' : 'Duyệt CLB thành công');
           if (res?.success === false) {
             message.warning(resMessage);
           } else {
@@ -263,7 +267,7 @@ export default function AdminClubsPage() {
           }
           await fetchClubs();
         } catch (err) {
-          message.error(err?.message || 'Không thể duyệt CLB');
+          message.error(err?.message || (isSuspended ? 'Không thể mở lại CLB' : 'Không thể duyệt CLB'));
         } finally {
           setLoading(false);
         }
@@ -323,7 +327,7 @@ export default function AdminClubsPage() {
   const columns = useMemo(
     () => [
       {
-        title: 'STT',
+        title: 'ID CLB',
         dataIndex: 'clubId',
         key: 'clubId',
         width: 80,
@@ -370,11 +374,25 @@ export default function AdminClubsPage() {
                 Sửa
               </Button>
               {normalizedStatus === 'PENDING' && (
-                <Button size="small" type="link" onClick={() => handleApproveClub(record)}>
+                <Button 
+                  size="small" 
+                  type="link" 
+                  onClick={() => handleApproveClub(record)}
+                >
                   Duyệt
                 </Button>
               )}
-              {normalizedStatus !== 'SUSPENDED' && normalizedStatus !== 'PENDING' && (
+              {normalizedStatus === 'SUSPENDED' && (
+                <Button 
+                  size="small" 
+                  type="link" 
+                  onClick={() => handleApproveClub(record)}
+                  style={{ color: '#1890ff' }}
+                >
+                  Mở lại
+                </Button>
+              )}
+              {normalizedStatus === 'ACTIVE' && (
                 <Button size="small" type="link" danger onClick={() => handleSuspendClub(record)}>
                   Đình chỉ
                 </Button>
@@ -402,9 +420,10 @@ export default function AdminClubsPage() {
         <Title level={3} style={{ margin: 0 }}>
           Quản lý CLB
         </Title>
-        <Button type="primary" onClick={handleOpenCreateModal}>
+        {/* Nút thêm CLB đã được ẩn theo yêu cầu */}
+        {/* <Button type="primary" onClick={handleOpenCreateModal}>
           Thêm CLB
-        </Button>
+        </Button> */}
       </div>
 
       {/* Filter Section */}

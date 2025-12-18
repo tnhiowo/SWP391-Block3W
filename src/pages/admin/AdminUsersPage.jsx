@@ -281,7 +281,7 @@ export default function AdminUsersPage() {
   const columns = useMemo(
     () => [
       {
-        title: 'STT',
+        title: 'ID User',
         dataIndex: 'userId',
         key: 'userId',
         width: 80,

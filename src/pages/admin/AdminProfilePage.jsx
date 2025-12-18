@@ -46,11 +46,12 @@ function getInitials(fullName) {
 }
 
 export default function AdminProfilePage() {
-  const { user } = useAuth();
+  const { user, loadUser } = useAuth();
   const [form] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profile, setProfile] = useState(() => {
     if (!user) return null;
     return {
@@ -84,7 +85,6 @@ export default function AdminProfilePage() {
         fullName: profileData.fullName || '',
         email: profileData.email || '',
         phone: profileData.phone || '',
-        avatar: profileData.avatar || '',
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -104,7 +104,6 @@ export default function AdminProfilePage() {
       fullName: profile.fullName || '',
       email: profile.email || '',
       phone: profile.phone || '',
-      avatar: profile.avatar || '',
     });
   }, [profile, form]);
 
@@ -119,8 +118,55 @@ export default function AdminProfilePage() {
         fullName: profile.fullName || '',
         email: profile.email || '',
         phone: profile.phone || '',
-        avatar: profile.avatar || '',
       });
+    }
+  };
+
+  const handleAvatarUpload = async (file) => {
+    try {
+      setUploadingAvatar(true);
+      const response = await userApiService.updateAvatar(file);
+      
+      // Extract avatar URL from response
+      const newAvatarUrl = response?.data?.avatar || response?.avatar;
+      
+      if (newAvatarUrl) {
+        // Update profile state with new avatar
+        setProfile((prev) => ({
+          ...prev,
+          avatar: newAvatarUrl,
+        }));
+        
+        // Update user in AuthContext to sync avatar in AdminLayout
+        if (loadUser) {
+          await loadUser();
+        }
+        
+        message.success(response?.message || 'Cập nhật avatar thành công');
+      } else {
+        // Fallback: refresh profile and AuthContext to get updated avatar
+        await fetchProfile();
+        if (loadUser) {
+          await loadUser();
+        }
+        message.success('Cập nhật avatar thành công');
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      message.error(error.message || 'Có lỗi xảy ra khi cập nhật avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+    return false; // Prevent default upload behavior
+  };
+
+  const handleAvatarClick = () => {
+    if (isEditing) {
+      // Trigger file input click
+      const fileInput = document.getElementById('avatar-upload-input');
+      if (fileInput) {
+        fileInput.click();
+      }
     }
   };
 
@@ -131,7 +177,12 @@ export default function AdminProfilePage() {
 
       await userApiService.updateProfile(values);
       message.success('Cập nhật thông tin thành công');
+      
+      // Refresh profile and AuthContext to sync data
       await fetchProfile();
+      if (loadUser) {
+        await loadUser();
+      }
 
       setIsEditing(false);
     } catch (error) {
@@ -175,7 +226,7 @@ export default function AdminProfilePage() {
               }}
             >
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                <div>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <Avatar
                     size={120}
                     src={profile?.avatar}
@@ -184,10 +235,56 @@ export default function AdminProfilePage() {
                       fontSize: 48,
                       border: '4px solid #fff',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      cursor: isEditing ? 'pointer' : 'default',
+                      transition: 'all 0.3s',
+                      opacity: uploadingAvatar ? 0.6 : 1,
                     }}
+                    onClick={handleAvatarClick}
                   >
                     {getInitials(profile?.fullName)}
                   </Avatar>
+                  {isEditing && (
+                    <>
+                      <input
+                        id="avatar-upload-input"
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleAvatarUpload(file);
+                          }
+                          // Reset input để có thể chọn lại file cùng tên
+                          e.target.value = '';
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          right: 0,
+                          backgroundColor: '#1890ff',
+                          borderRadius: '50%',
+                          width: 36,
+                          height: 36,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          border: '2px solid #fff',
+                        }}
+                        onClick={handleAvatarClick}
+                      >
+                        {uploadingAvatar ? (
+                          <CameraOutlined spin style={{ color: '#fff', fontSize: 16 }} />
+                        ) : (
+                          <CameraOutlined style={{ color: '#fff', fontSize: 16 }} />
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>
@@ -315,17 +412,37 @@ export default function AdminProfilePage() {
                   <Input placeholder="Nhập số điện thoại" size="large" />
                 </Form.Item>
 
-                <Form.Item
-                  label={
-                    <Space>
-                      <CameraOutlined />
-                      <span>Avatar URL</span>
-                    </Space>
-                  }
-                  name="avatar"
-                >
-                  <Input placeholder="Nhập URL avatar" size="large" />
-                </Form.Item>
+                {isEditing && (
+                  <Form.Item
+                    label={
+                      <Space>
+                        <CameraOutlined />
+                        <span>Thay đổi Avatar</span>
+                      </Space>
+                    }
+                  >
+                    <Upload
+                      name="file"
+                      accept="image/*"
+                      beforeUpload={handleAvatarUpload}
+                      showUploadList={false}
+                      disabled={uploadingAvatar}
+                    >
+                      <Button
+                        icon={<CameraOutlined />}
+                        loading={uploadingAvatar}
+                        disabled={uploadingAvatar}
+                        size="large"
+                        block
+                      >
+                        {uploadingAvatar ? 'Đang tải lên...' : 'Chọn file ảnh từ máy tính'}
+                      </Button>
+                    </Upload>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
+                      Hoặc click vào avatar ở bên trái để chọn file
+                    </Text>
+                  </Form.Item>
+                )}
               </Form>
             </Card>
 
