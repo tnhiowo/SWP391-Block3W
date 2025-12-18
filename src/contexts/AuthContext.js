@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("authUser");
         setUser(null);
-        navigate("/login");
+        navigate("/");
     };
 
     return (

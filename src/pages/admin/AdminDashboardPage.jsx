@@ -52,26 +52,6 @@ const activityColumns = [
   },
 ];
 
-const recentActivities = [
-  {
-    key: 1,
-    time: "Hôm nay, 09:15",
-    type: "USER",
-    description: "User mới đăng ký tài khoản",
-  },
-  {
-    key: 2,
-    time: "Hôm nay, 08:40",
-    type: "CLB",
-    description: "CLB mới được tạo bởi Leader",
-  },
-  {
-    key: 3,
-    time: "Hôm qua, 16:20",
-    type: "FEE",
-    description: "Sinh viên thanh toán phí CLB Lập trình",
-  },
-];
 
 export default function AdminDashboardPage() {
   const { token } = theme.useToken();
@@ -222,7 +202,7 @@ export default function AdminDashboardPage() {
   };
 
   const clubsWithPendingCount = useMemo(
-    () => myClubsData.filter((club) => (club.pendingCount || 0) > 0).length,
+    () => myClubsData.filter((club) => (club.pendingFees || 0) > 0).length,
     [myClubsData]
   );
 
@@ -235,7 +215,7 @@ export default function AdminDashboardPage() {
     () =>
       myClubsData.filter((club) => {
         const members = club.memberCount || 0;
-        const pending = club.pendingCount || 0;
+        const pending = club.pendingFees || 0;
         if (!members) return false;
         const completionRate = 1 - pending / members;
         return completionRate * 100 < 50;
@@ -260,18 +240,18 @@ export default function AdminDashboardPage() {
         icon: <TeamOutlined />,
         color: "#22c55e",
       },
-      {
-        key: "todayRevenue",
-        label: "Doanh thu hôm nay",
-        value: loadingDashboard ? "-" : formatVnd(dashboardStats.todayRevenue || 0),
-        icon: <DollarOutlined />,
-        color: "#22c55e",
-      },
+      // {
+      //   key: "todayRevenue",
+      //   label: "Doanh thu hôm nay",
+      //   value: loadingDashboard ? "-" : formatVnd(dashboardStats.totalRevenue || 0),
+      //   icon: <ArrowUpOutlined/>,
+      //   color: "#22c55e",
+      // },
       {
         key: "totalRevenue",
         label: "Tổng doanh thu",
-        value: loadingDashboard ? "-" : formatVnd(dashboardStats.totalRevenue || 0),
-        icon: <ArrowUpOutlined />,
+        value: loadingDashboard ? "-" : formatVnd(dashboardStats.todayRevenue || 0),
+        icon: <DollarOutlined />,
         color: "#6366f1",
       },
     ],
@@ -357,6 +337,7 @@ export default function AdminDashboardPage() {
                   title: "CLB",
                   dataIndex: "clubName",
                   key: "clubName",
+                  width: 200,
                   render: (text) => (
                     <Text strong style={{ fontSize: 14, whiteSpace: "normal" }}>
                       {text}
@@ -370,20 +351,21 @@ export default function AdminDashboardPage() {
                   align: "center",
                   width: 120,
                 },
-                {
-                  title: "Phí áp dụng",
-                  dataIndex: "activeFeeCount",
-                  key: "activeFeeCount",
-                  align: "center",
-                  width: 100,
-                },
+                // {
+                //   title: "Phí áp dụng",
+                //   dataIndex: "activeFeeCount",
+                //   key: "activeFeeCount",
+                //   align: "center",
+                //   width: 100,
+                // },
                 {
                   title: "Chờ thanh toán",
-                  dataIndex: "pendingCount",
-                  key: "pendingCount",
+                  dataIndex: "pendingFees",
+                  key: "pendingFees",
                   align: "center",
-                  width: 130,
-                  render: (count) => {
+                  width: 120,
+                  render: (pendingFees) => {
+                    const count = pendingFees || 0;
                     if (count > 0) {
                       return <Tag color="warning">{count}</Tag>;
                     }
@@ -391,16 +373,20 @@ export default function AdminDashboardPage() {
                   },
                 },
                 {
-                  title: "Chi tiết doanh thu",
-                  key: "viewDetail",
+                  title: "Bài đăng",
+                  dataIndex: "postCount",
+                  key: "postCount",
                   align: "center",
-                  width: 160,
-                  render: (_, record) => (
-                    <Button type="link" onClick={() => handleViewDetail(record.clubId)}>
-                      Xem chi tiết
-                    </Button>
-                  ),
+                  width: 110,
                 },
+                {
+                  title: "Yêu cầu tham gia",
+                  dataIndex: "joinRequestCount",
+                  key: "joinRequestCount",
+                  align: "center",
+                  width: 120,
+                },
+                
                 {
                   title: "Doanh thu",
                   dataIndex: "totalRevenue",
@@ -411,12 +397,23 @@ export default function AdminDashboardPage() {
                     <Text style={{ fontWeight: 500 }}>{formatVnd(amount)}</Text>
                   ),
                 },
+                {
+                  title: "Chi tiết",
+                  key: "viewDetail",
+                  align: "center",
+                  width: 70,
+                  render: (_, record) => (
+                    <Button type="link" onClick={() => handleViewDetail(record.clubId)}>
+                      Xem chi tiết
+                    </Button>
+                  ),
+                },
               ]}
               dataSource={myClubsData}
               loading={loadingClubs}
               rowKey="clubId"
               onRow={(record) => {
-                const hasPending = (record.pendingCount || 0) > 0;
+                const hasPending = (record.pendingFees || 0) > 0;
                 const noRevenue = (record.totalRevenue || 0) === 0;
 
                 return {
@@ -492,23 +489,6 @@ export default function AdminDashboardPage() {
           </Card>
         </Col>
       </Row>
-
-      {/* Hoạt động gần đây */}
-      <Card
-        title="Hoạt động gần đây"
-        bordered={false}
-        style={{
-          borderRadius: 12,
-          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-        }}
-      >
-        <Table
-          columns={activityColumns}
-          dataSource={recentActivities}
-          pagination={false}
-          size="middle"
-        />
-      </Card>
 
       {/* Modal chi tiết CLB */}
       <ClubDetailModal open={isDetailModalOpen} onClose={handleCloseModal} clubId={selectedClubId} />

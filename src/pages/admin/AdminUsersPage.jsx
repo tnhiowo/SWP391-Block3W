@@ -286,8 +286,6 @@ export default function AdminUsersPage() {
         key: 'userId',
         width: 80,
         align: 'center',
-        sorter: (a, b) => a.userId - b.userId,
-        defaultSortOrder: 'ascend',
       },
       {
         title: 'Họ tên',
@@ -372,17 +370,11 @@ export default function AdminUsersPage() {
   const handleSearch = (values) => {
     handleFilterChange({
       search: values.search || '',
-      sortBy: values.sortBy || 'UserId',
-      sortOrder: values.sortOrder || 'asc',
     });
   };
 
   const handleResetFilters = () => {
     filterForm.resetFields();
-    filterForm.setFieldsValue({
-      sortBy: 'UserId',
-      sortOrder: 'asc',
-    });
     setFilters({
       pageNumber: 1,
       pageSize: 10,
@@ -418,7 +410,7 @@ export default function AdminUsersPage() {
       email: user.email,
       phone: user.phone || '',
       studentCode: user.studentCode || '',
-      avatar: user.avatar || '',
+      // avatar: user.avatar || '',
     });
     setIsModalOpen(true);
   };
@@ -651,35 +643,19 @@ export default function AdminUsersPage() {
           onFinish={handleSearch}
           initialValues={{
             search: '',
-            sortBy: 'UserId',
-            sortOrder: 'asc',
           }}
         >
           <Row gutter={16}>
             <Col xs={24} sm={12} md={8} lg={6}>
               <Form.Item label="Tìm kiếm" name="search">
                 <Input
-                  placeholder="Tìm theo tên, email..."
+                  placeholder="Tìm theo tên user..."
                   prefix={<SearchOutlined />}
                   allowClear
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Form.Item label="Sắp xếp theo" name="sortBy">
-                <Select
-                  placeholder="Chọn trường sắp xếp"
-                  allowClear
-                  options={SORT_BY_OPTIONS}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Form.Item label="Thứ tự" name="sortOrder">
-                <Select options={SORT_ORDER_OPTIONS} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={24} md={24} lg={6}>
+            <Col xs={24} sm={24} md={24} lg={18}>
               <Form.Item label=" " style={{ marginBottom: 0 }}>
                 <Space>
                   <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
@@ -782,11 +758,11 @@ export default function AdminUsersPage() {
             </Form.Item>
           )}
 
-          {modalMode === 'edit' && (
+          {/* {modalMode === 'edit' && (
             <Form.Item label="Avatar URL" name="avatar">
               <Input placeholder="Nhập URL avatar (nếu có)" />
             </Form.Item>
-          )}
+          )} */}
         </Form>
       </Modal>
 

@@ -11,7 +11,12 @@ import {
   Space,
   message,
   Typography,
+  Card,
+  Row,
+  Col,
+  Spin,
 } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { clubApiService } from '../../services/clubApiService';
 
 const { Title } = Typography;
@@ -112,6 +117,7 @@ export default function AdminClubsPage() {
   const [editingClub, setEditingClub] = useState(null);
 
   const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
 
   const mapClubFromApi = (club) => ({
     clubId: club.ClubId ?? club.clubId,
@@ -126,29 +132,26 @@ export default function AdminClubsPage() {
   });
 
   const fetchClubs = async (query = filters) => {
-      setLoading(true);
-      try {
+    setLoading(true);
+    try {
       const params = {
         PageNumber: query.pageNumber,
         PageSize: query.pageSize,
-        Search: query.searchKeyword || undefined,
-        SortBy: query.sortBy || undefined,
-        SortOrder: query.sortOrder || undefined,
+        ...(query.searchKeyword && { Search: query.searchKeyword }),
       };
-      if (query.status && query.status !== 'ALL') params.status = query.status;
 
       const res = await clubApiService.getAllClubs(params);
       const dataList = res.Data ?? res.data ?? res.items ?? [];
       const totalCount =
         res.TotalCount ?? res.totalCount ?? res.total ?? dataList.length ?? 0;
-        setClubs(dataList.map(mapClubFromApi));
+      setClubs(dataList.map(mapClubFromApi));
       setTotal(totalCount);
-      } catch (err) {
-        message.error(err.message || 'Không tải được danh sách CLB');
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (err) {
+      message.error(err.message || 'Không tải được danh sách CLB');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     sessionStorage.setItem(FILTER_SESSION_KEY, JSON.stringify(filters));
@@ -289,22 +292,32 @@ export default function AdminClubsPage() {
     });
   };
 
-  const handleTableChange = (pagination, _filters, sorter) => {
-    const sortBy = SORT_FIELD_MAP[sorter.field] || null;
-    const sortOrder =
-      sorter.order === 'ascend'
-        ? 'asc'
-        : sorter.order === 'descend'
-        ? 'desc'
-        : null;
-
+  const handleTableChange = (pagination) => {
     setFilters((prev) => ({
       ...prev,
       pageNumber: pagination.current,
       pageSize: pagination.pageSize,
-      sortBy,
-      sortOrder,
     }));
+  };
+
+  const handleSearch = (values) => {
+    setFilters((prev) => ({
+      ...prev,
+      searchKeyword: values.search || '',
+      pageNumber: 1,
+    }));
+  };
+
+  const handleResetFilters = () => {
+    filterForm.resetFields();
+    setFilters({
+      pageNumber: 1,
+      pageSize: 10,
+      searchKeyword: '',
+      status: 'ALL',
+      sortBy: null,
+      sortOrder: null,
+    });
   };
 
   const columns = useMemo(
@@ -320,7 +333,6 @@ export default function AdminClubsPage() {
         title: 'Tên CLB',
         dataIndex: 'clubName',
         key: 'clubName',
-        sorter: true,
       },
       {
         title: 'Chủ nhiệm',
@@ -337,14 +349,12 @@ export default function AdminClubsPage() {
         dataIndex: 'status',
         key: 'status',
         render: renderStatusTag,
-        sorter: true,
       },
       {
         title: 'Ngày tạo',
         dataIndex: 'createdAt',
         key: 'createdAt',
         render: (value) => formatDate(value),
-        sorter: true,
       },
       {
         title: 'Thao tác',
@@ -397,83 +407,72 @@ export default function AdminClubsPage() {
         </Button>
       </div>
 
-      <div
+      {/* Filter Section */}
+      <Card
+        bordered={false}
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 16,
-          gap: 16,
-          flexWrap: 'wrap',
+          borderRadius: 12,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         }}
       >
-        <Input
-          placeholder="Tìm kiếm theo tên CLB"
-          value={filters.searchKeyword}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              searchKeyword: e.target.value,
-              pageNumber: 1,
-            }))
-          }
-          style={{ maxWidth: 300 }}
-          allowClear
-        />
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Select
-            placeholder="Sắp xếp theo"
-            value={filters.sortBy}
-            onChange={(value) =>
-              setFilters((prev) => ({
-                ...prev,
-                sortBy: value || null,
-                pageNumber: 1,
-              }))
-            }
-            allowClear
-            style={{ width: 180 }}
-            options={SORT_BY_OPTIONS}
-          />
-          <Select
-            placeholder="Thứ tự"
-            value={filters.sortOrder}
-            onChange={(value) =>
-              setFilters((prev) => ({
-                ...prev,
-                sortOrder: value || null,
-                pageNumber: 1,
-              }))
-            }
-            allowClear
-            style={{ width: 140 }}
-            options={SORT_ORDER_OPTIONS}
-          />
-        </div>
-        <Select
-          value={filters.status}
-          onChange={(value) =>
-            setFilters((prev) => ({ ...prev, status: value, pageNumber: 1 }))
-          }
-          style={{ width: 200 }}
-          options={[{ label: 'Tất cả trạng thái', value: 'ALL' }, ...STATUS_OPTIONS]}
-        />
-      </div>
+        <Form
+          form={filterForm}
+          layout="vertical"
+          onFinish={handleSearch}
+          initialValues={{
+            search: '',
+          }}
+        >
+          <Row gutter={16}>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Form.Item label="Tìm kiếm" name="search">
+                <Input
+                  placeholder="Tìm theo tên CLB..."
+                  prefix={<SearchOutlined />}
+                  allowClear
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={24} md={24} lg={18}>
+              <Form.Item label=" " style={{ marginBottom: 0 }}>
+                <Space>
+                  <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                    Tìm kiếm
+                  </Button>
+                  <Button onClick={handleResetFilters} icon={<ReloadOutlined />}>
+                    Làm mới
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
 
-      <Table
-        rowKey="clubId"
-        columns={columns}
-        dataSource={clubs}
-        loading={loading}
-        pagination={{
-          current: filters.pageNumber,
-          pageSize: filters.pageSize,
-          total,
-          showSizeChanger: true,
-          showTotal: (t) => `${t} CLB`,
+      <Card
+        bordered={false}
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         }}
-        onChange={handleTableChange}
-      />
+      >
+        <Spin spinning={loading}>
+          <Table
+            rowKey="clubId"
+            columns={columns}
+            dataSource={clubs}
+            pagination={{
+              current: filters.pageNumber,
+              pageSize: filters.pageSize,
+              total,
+              showSizeChanger: true,
+              showTotal: (t) => `${t} CLB`,
+            }}
+            onChange={handleTableChange}
+            style={{ borderRadius: 8 }}
+          />
+        </Spin>
+      </Card>
 
       <Modal
         title="Chi tiết CLB"

@@ -1,8 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Descriptions, Table, Tag, Typography, Spin, message, Button, Progress, Empty } from "antd";
+import {
+  Modal,
+  Table,
+  Typography,
+  Spin,
+  Tag,
+  Progress,
+  Space,
+  Divider,
+  Empty,
+  message,
+} from "antd";
+import {
+  TeamOutlined,
+  DollarOutlined,
+  FileTextOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import { statisticsApiService } from "../services/statisticsApiService";
+import dayjs from "dayjs";
 
-const { Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 // Helper function để format tiền VND
 const formatVnd = (amount) => {
@@ -14,71 +32,53 @@ const formatVnd = (amount) => {
 
 // Helper function để format ngày
 const formatDate = (dateString) => {
-  if (!dateString) return "—";
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch (error) {
-    return dateString;
-  }
+  if (!dateString) return "-";
+  return dayjs(dateString).format("DD/MM/YYYY");
 };
 
-// Helper function để format frequency
-const formatFrequency = (frequency) => {
-  const map = {
-    OneTime: { label: "Một lần", color: "blue" },
-    Monthly: { label: "Hàng tháng", color: "green" },
-    Yearly: { label: "Hàng năm", color: "purple" },
-  };
-  const cfg = map[frequency] || { label: frequency, color: "default" };
-  return cfg;
-};
-
-const ClubDetailModal = ({ open, onClose, clubId }) => {
+export default function ClubDetailModal({ open, onClose, clubId }) {
   const [loading, setLoading] = useState(false);
   const [clubData, setClubData] = useState(null);
 
   useEffect(() => {
     if (open && clubId) {
       fetchClubDetail();
-    } else {
-      setClubData(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, clubId]);
 
   const fetchClubDetail = async () => {
-    if (!clubId) return;
-
     setLoading(true);
     try {
       const response = await statisticsApiService.getClubStatistics(clubId);
 
       if (response?.success === false) {
-        const errorMsg = response?.message || "Không thể tải chi tiết CLB";
+        const errorMsg = response?.message || "Không thể tải thông tin CLB";
         message.error(errorMsg);
         setClubData(null);
       } else if (response?.success === true && response?.data) {
         setClubData(response.data);
       } else if (response?.data) {
-        // Fallback: nếu không có success field nhưng có data
+        // Fallback nếu không có success field nhưng có data
         setClubData(response.data);
       } else {
         setClubData(null);
       }
     } catch (error) {
-      console.error("Failed to load club detail", error);
-      const errorMsg = error?.message || "Có lỗi xảy ra khi tải chi tiết CLB";
-      message.error(errorMsg);
+      console.error("Failed to load club statistics", error);
+      message.error("Có lỗi xảy ra khi tải thông tin CLB");
       setClubData(null);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setClubData(null);
+    onClose();
+  };
+
+  // Columns cho bảng thống kê phí
   const feeColumns = [
     {
       title: "Tên phí",
@@ -91,135 +91,221 @@ const ClubDetailModal = ({ open, onClose, clubId }) => {
       dataIndex: "amount",
       key: "amount",
       align: "right",
+      width: 130,
       render: (amount) => <Text>{formatVnd(amount)}</Text>,
     },
     {
-      title: "Hạn thanh toán",
+      title: "Hạn đóng",
       dataIndex: "dueDate",
       key: "dueDate",
-      render: (date) => formatDate(date),
-    },
-    {
-      title: "Tần suất",
-      dataIndex: "frequency",
-      key: "frequency",
-      render: (frequency) => {
-        const cfg = formatFrequency(frequency);
-        return <Tag color={cfg.color}>{cfg.label}</Tag>;
+      align: "center",
+      width: 120,
+      render: (date) => {
+        const isOverdue = date && dayjs(date).isBefore(dayjs(), "day");
+        return (
+          <Text type={isOverdue ? "danger" : undefined}>
+            {formatDate(date)}
+          </Text>
+        );
       },
     },
     {
-      title: "Đã thanh toán",
+      title: "Đã đóng",
       dataIndex: "paidCount",
       key: "paidCount",
       align: "center",
+      width: 90,
+      render: (count) => <Tag color="success">{count || 0}</Tag>,
     },
     {
-      title: "Chờ thanh toán",
+      title: "Chờ đóng",
       dataIndex: "pendingCount",
       key: "pendingCount",
       align: "center",
-      render: (count) => {
-        if (count > 0) {
-          return <Tag color="warning">{count}</Tag>;
-        }
-        return <Text type="secondary">0</Text>;
-      },
+      width: 90,
+      render: (count) =>
+        count > 0 ? (
+          <Tag color="warning">{count}</Tag>
+        ) : (
+          <Text type="secondary">0</Text>
+        ),
     },
     {
       title: "Tỷ lệ hoàn thành",
       dataIndex: "completionRate",
       key: "completionRate",
       align: "center",
-      render: (rate) => {
-        const rateValue = rate || 0;
-        return (
-          <div>
-            <Progress
-              percent={rateValue}
-              size="small"
-              format={(percent) => `${percent}%`}
-              style={{ minWidth: 80 }}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      title: "Doanh thu",
-      dataIndex: "revenue",
-      key: "revenue",
-      align: "right",
-      render: (amount) => <Text style={{ fontWeight: 500 }}>{formatVnd(amount)}</Text>,
+      width: 150,
+      render: (rate) => (
+        <Progress
+          percent={rate || 0}
+          size="small"
+          status={rate >= 80 ? "success" : rate >= 50 ? "normal" : "exception"}
+          strokeColor={
+            rate >= 80 ? "#52c41a" : rate >= 50 ? "#1890ff" : "#ff4d4f"
+          }
+        />
+      ),
     },
   ];
 
   return (
     <Modal
-      title="Chi tiết CLB"
+      title={
+        <Space>
+          <TeamOutlined style={{ color: "#1890ff" }} />
+          <span>Chi tiết CLB</span>
+        </Space>
+      }
       open={open}
-      onCancel={onClose}
-      footer={[
-        <Button key="close" type="primary" onClick={onClose}>
-          Đóng
-        </Button>,
-      ]}
-      width={1200}
-      maskClosable={false}
+      onCancel={handleClose}
+      footer={null}
+      width={900}
       destroyOnClose
     >
-      <Spin spinning={loading}>
-        {clubData ? (
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "60px 0" }}>
+          <Spin size="large" />
+          <div style={{ marginTop: 16 }}>
+            <Text type="secondary">Đang tải thông tin...</Text>
+          </div>
+        </div>
+      ) : clubData ? (
+        <Space direction="vertical" size={24} style={{ width: "100%" }}>
+          {/* Thông tin cơ bản */}
           <div>
-            {/* Thông tin CLB */}
-            <Descriptions
-              title="Thông tin CLB"
-              bordered
-              column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
-              style={{ marginBottom: 24 }}
-            >
-              <Descriptions.Item label="Club ID">{clubData.clubId}</Descriptions.Item>
-              <Descriptions.Item label="Tên CLB">
-                <Text strong>{clubData.clubName}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng thành viên">{clubData.totalMembers || 0}</Descriptions.Item>
-              <Descriptions.Item label="Tổng doanh thu">
-                <Text style={{ fontWeight: 500, color: "#22C55E" }}>
-                  {formatVnd(clubData.totalRevenue || 0)}
-                </Text>
-              </Descriptions.Item>
-            </Descriptions>
+            <Title level={4} style={{ marginBottom: 8 }}>
+              {clubData.clubName}
+            </Title>
+            {clubData.description && (
+              <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+                {clubData.description}
+              </Paragraph>
+            )}
 
-            {/* Danh sách phí đang áp dụng */}
-            <div style={{ marginTop: 24 }}>
-              <Text strong style={{ fontSize: 16, display: "block", marginBottom: 16 }}>
-                Các khoản phí đang áp dụng
-              </Text>
-              {clubData.activeFeeSchedules && clubData.activeFeeSchedules.length > 0 ? (
-                <Table
-                  columns={feeColumns}
-                  dataSource={clubData.activeFeeSchedules}
-                  rowKey="feeScheduleId"
-                  pagination={false}
-                  size="middle"
-                  scroll={{ x: "max-content" }}
+            {/* Stats Grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 16,
+              }}
+            >
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: "#f0f5ff",
+                  borderRadius: 8,
+                  textAlign: "center",
+                }}
+              >
+                <TeamOutlined
+                  style={{ fontSize: 24, color: "#1890ff", marginBottom: 8 }}
                 />
-              ) : (
-                <Empty description="Chưa có khoản phí đang áp dụng" />
-              )}
+                <div>
+                  <Text strong style={{ fontSize: 20 }}>
+                    {clubData.totalMembers || 0}
+                  </Text>
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Thành viên
+                </Text>
+              </div>
+
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: "#f6ffed",
+                  borderRadius: 8,
+                  textAlign: "center",
+                }}
+              >
+                <DollarOutlined
+                  style={{ fontSize: 24, color: "#52c41a", marginBottom: 8 }}
+                />
+                <div>
+                  <Text strong style={{ fontSize: 20 }}>
+                    {formatVnd(clubData.totalRevenue)}
+                  </Text>
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Tổng doanh thu
+                </Text>
+              </div>
+
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: "#fff7e6",
+                  borderRadius: 8,
+                  textAlign: "center",
+                }}
+              >
+                <FileTextOutlined
+                  style={{ fontSize: 24, color: "#fa8c16", marginBottom: 8 }}
+                />
+                <div>
+                  <Text strong style={{ fontSize: 20 }}>
+                    {clubData.totalPosts || 0}
+                  </Text>
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Bài đăng
+                </Text>
+              </div>
+
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: "#fff1f0",
+                  borderRadius: 8,
+                  textAlign: "center",
+                }}
+              >
+                <UserAddOutlined
+                  style={{ fontSize: 24, color: "#f5222d", marginBottom: 8 }}
+                />
+                <div>
+                  <Text strong style={{ fontSize: 20 }}>
+                    {clubData.pendingJoinRequests || 0}
+                  </Text>
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Yêu cầu tham gia
+                </Text>
+              </div>
             </div>
           </div>
-        ) : (
-          !loading && <Empty description="Không có dữ liệu" />
-        )}
-      </Spin>
+
+          <Divider style={{ margin: "8px 0" }} />
+
+          {/* Thống kê phí */}
+          <div>
+            <Title level={5} style={{ marginBottom: 12 }}>
+              <DollarOutlined style={{ marginRight: 8, color: "#52c41a" }} />
+              Thống kê các khoản phí
+            </Title>
+            <Table
+              columns={feeColumns}
+              dataSource={clubData.feeStatistics || []}
+              rowKey={(record, index) => `fee-${index}`}
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="Chưa có khoản phí nào"
+                  />
+                ),
+              }}
+            />
+          </div>
+        </Space>
+      ) : (
+        <Empty description="Không tìm thấy thông tin CLB" />
+      )}
     </Modal>
   );
-};
-
-export default ClubDetailModal;
-
-
-
-
+}
 
