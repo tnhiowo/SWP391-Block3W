@@ -28,7 +28,7 @@ namespace ClubManagementApi.Controllers
             if (context == null)
             {
                 logger?.LogError("HttpContext is null in JwtHelper.GetUserIdFromHttpContext.");
-                throw new UnauthorizedAccessException("Bạn chưa đăng nhập.");
+                throw new UnauthorizedAccessException("Bạn chưa đăng nhập");
             }
 
             if (context.User != null && context.User.Identity != null && context.User.Identity.IsAuthenticated)
