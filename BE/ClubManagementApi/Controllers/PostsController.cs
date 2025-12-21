@@ -466,8 +466,6 @@ namespace ClubManagementApi.Controllers
             if (post == null) return NotFound(ApiResponse<object>.FailResponse("Bài viết không tồn tại"));
 
             bool isOwner = post.UserId == CurrentUserId;
-            if (!isOwner && !User.IsInRole("Admin"))
-                return StatusCode(403, ApiResponse<object>.FailResponse("Bạn không phải chủ bài viết này"));
 
             post.Content = dto.Content?.Trim();
             post.UpdatedAt = TimeZoneHelper.NowInVietnam;
@@ -515,8 +513,6 @@ namespace ClubManagementApi.Controllers
             if (post == null) return NotFound(ApiResponse<object>.FailResponse("Bài viết không tồn tại"));
 
             bool isOwner = post.UserId == CurrentUserId;
-            if (!isOwner && !User.IsInRole("Admin"))
-                return StatusCode(403, ApiResponse<object>.FailResponse("Bạn không phải chủ bài viết này"));
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try

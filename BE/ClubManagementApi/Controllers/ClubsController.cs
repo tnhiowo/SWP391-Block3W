@@ -155,8 +155,6 @@ namespace ClubManagementApi.Controllers
             return BadRequest(ApiResponse<object>.FailResponse("Dữ liệu không hợp lệ", errors));
         }
 
-        // ==================== CÁC ENDPOINT ====================
-
         [AllowAnonymous]
         [HttpGet("public")]
         public async Task<IActionResult> GetPublicList([FromQuery] PaginationParams p)
@@ -172,12 +170,11 @@ namespace ClubManagementApi.Controllers
             if (!string.IsNullOrEmpty(p.Search))
                 query = query.Where(c => c.ClubName.Contains(p.Search.Trim()));
 
-            // Sort đơn giản
             query = (p.SortBy?.ToLower(), p.SortOrder?.ToLower()) switch
             {
                 ("clubname", "asc") => query.OrderBy(c => c.ClubName),
                 ("clubname", "desc") => query.OrderByDescending(c => c.ClubName),
-                _ => query.OrderByDescending(c => c.CreatedAt) // mặc định
+                _ => query.OrderByDescending(c => c.CreatedAt) 
             };
 
             var total = await query.CountAsync();

@@ -98,11 +98,11 @@ namespace ClubManagementApi.Controllers
             public string AcademicYear { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Giới thiệu bản thân là bắt buộc")]
-            [MinLength(50, ErrorMessage = "Giới thiệu phải ít nhất 50 ký tự")]
+            [MinLength(20, ErrorMessage = "Giới thiệu phải ít nhất 20 ký tự")]
             public string Introduction { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Lý do tham gia là bắt buộc")]
-            [MinLength(50, ErrorMessage = "Lý do phải ít nhất 50 ký tự")]
+            [MinLength(20, ErrorMessage = "Lý do phải ít nhất 20 ký tự")]
             public string Reason { get; set; } = string.Empty;
 
             [StringLength(200)]
