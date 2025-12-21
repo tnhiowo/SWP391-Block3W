@@ -33,7 +33,7 @@ namespace ClubManagementApi.Controllers
             if (context == null)
             {
                 logger?.LogError("HttpContext is null in JwtHelper.GetUserIdFromHttpContext.");
-                throw new UnauthorizedAccessException("Bạn chưa đăng nhập");
+                throw new UnauthorizedAccessException("Bạn chưa đăng nhập.");
             }
 
             if (context.User != null && context.User.Identity != null && context.User.Identity.IsAuthenticated)
@@ -46,7 +46,7 @@ namespace ClubManagementApi.Controllers
                     return userId;
                 }
                 logger?.LogError("Invalid UserId claim: {UserIdClaim}", userIdClaim);
-                throw new UnauthorizedAccessException("ID người dùng không hợp lệ.");
+                throw new UnauthorizedAccessException("ID người dùng không hợp lệ");
             }
 
             var token = context.Request.Query["access_token"].ToString();
