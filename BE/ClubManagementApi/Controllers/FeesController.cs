@@ -46,7 +46,7 @@ namespace ClubManagementApi.Controllers
                     return userId;
                 }
                 logger?.LogError("Invalid UserId claim: {UserIdClaim}", userIdClaim);
-                throw new UnauthorizedAccessException("ID người dùng không hợp lệ.");
+                throw new UnauthorizedAccessException("ID người dùng không hợp lệ");
             }
 
             var token = context.Request.Query["access_token"].ToString();

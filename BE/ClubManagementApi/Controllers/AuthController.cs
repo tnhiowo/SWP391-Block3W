@@ -445,7 +445,7 @@ namespace ClubManagementApi.Controllers
             tokenRecord.IsUsed = true;
             await _context.SaveChangesAsync();
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Đặt lại mật khẩu thành công"));
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Đặt lại mật khẩu thành công."));
         }
 
         private void FireAndForget(Func<Task> taskFunc)
